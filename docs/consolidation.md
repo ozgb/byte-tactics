@@ -116,6 +116,17 @@ revisit them once the surrounding code is known.
   (copy) and `Class_004c91b0` (`const char*`); the timer's two constructors
   both use `Class_004e1d20::Class_004e1d20`, which the checker cannot tell apart.
 
+- The `Class_0044ce20` family (vtables around 0x4fd3f8, constructors 0x44e740
+  and 0x44e9c0 among others) still stores its vtables by hand
+  (`vtable = DAT_004fd3f8;`), like the 0x4fc980 family before its
+  consolidation.
+
+- 0x43c360 is `vector::size()` of the global vector of 25-byte records at
+  0x512340 but is named `Class_0043c360::FUN_0043c360`; it will clash when
+  0x43bc90 or 0x43c050 is decompiled with a real `std::vector`.
+- 0x44ec00 is a vtable slot of `Class_0044e740` recorded as a free function;
+  tools/methods.py can't see it because it is only called through the vtable.
+
 ## Signatures that disagree
 
 The checker compares names, not parameter types, so callers and definitions

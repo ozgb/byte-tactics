@@ -900,6 +900,19 @@ name (`std::_Lockit::_Lockit` is 0x4e39b0).
 - **An inline helper that must reload a pointer member after each call**:
   take the pointer by reference (`Owner*& o`); passing it by value keeps it in
   a register (0x4077e0).
+- **`lea reg, [esi+K]` then stores at `[reg+4]`/`[reg+8]`**: a struct copy into
+  an inlined constructor's `this` (`*this = Vec3(...)`); field initialisers, a
+  user `operator=` or a helper give direct `[esi+K]` stores. The scheduler folds
+  the first store to `[esi+K]` only when nothing can fill the slot after the
+  `lea`, so an unfolded `mov [reg], x` means other instructions came between
+  them in the compiler's input (0x407d40).
+- **`strlen(text) > 0 ? text : 0`** gives `cmp eax, ecx; sbb esi, esi` for a
+  pointer-or-null select (0x435320).
+- **Stack offsets of several local arrays**: they follow the order the code
+  first writes them (zeroing order), not the declaration order (0x401360).
+- **A 0/1 argument pushed on its own in each branch**: write the call in every
+  branch with an `int ok` local rather than one call after the branches
+  (0x401360).
 - **Scoring many variants**: `uv run tools/check.py <addr> <scratch.cpp> --sym <part
   of the mangled name>` checks a scratch file; put many variant functions in one
   file and score each.
