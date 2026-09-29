@@ -71,6 +71,7 @@ void __stdcall FUN_0047db20(Unit_00487080* unit);
 void __stdcall FUN_00401110(void* info, Unit_00487080* unit, void* file);
 void __stdcall FUN_0043de30(void* vt, Unit_00487080* unit, void* file);
 void __stdcall FUN_004b2040(void* o, void* file);
+// FUNCTION: 0x487080
 Unit_00487080* __stdcall FUN_00487080(unsigned short id, Class_004b4560* file)
 {
     Unit_00487080* unit;
@@ -83,3 +84,17 @@ Unit_00487080* __stdcall FUN_00487080(unsigned short id, Class_004b4560* file)
         return 0;
     return unit;
 }
+
+// Analysis notes for the next attempt (from disassembly, not yet coded):
+//  - Record read at esp+0x18 (0xb8 bytes). Name at +0x0 -> FUN_00488b10 -> typeId.
+//  - FUN_00485f50 call args pushed high->low: id(+0x21), (flags>>4)&3, 1,
+//    {+0x2b,+0x2f,+0x33}, typeId, +0x20. Real signature is
+//    (player, typeId, pos(3), param_5, mode, id).
+//  - Record -> unit stores: +0x2f->+0x6e, +0x37->+0x64, +0x3b->+0x68,
+//    +0x3d->+0x108, +0x3f->+0xb8, +0x89->recursive child, +0x8b->+0xf0,
+//    +0x8d->+0xf9, +0x8e->+0xf4, +0x8f->+0x58, +0x93->+0x76, +0x97->+0x7a,
+//    +0x9b->+0x7e, +0x9f->+0xac, +0xab->+0x104, +0xaf->+0xf5, +0xb0->+0xf6,
+//    +0xb1->+0xf7, +0xb2->+0xba, +0xb4->+0x10f/+0x110 bitfield merge,
+//    +0xb7->+0xf8, +0xb8->+0xfa, +0xb9->+0x10e.
+//  - Unit header: +0x9a pointer (FUN_004b2040), list head +0x5c / tail +0x60,
+//    +0xbc object (FUN_00401110), +0xc 3x 0x1c-byte piece copies.
