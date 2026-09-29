@@ -85,7 +85,8 @@ void FUN_00483610()
     tnt = ((Class_004356c0*)*(void**)(game + 0x391e9))->FUN_004356c0(1);
     tnt = FUN_00429660(tnt);
     info.version = *tnt;
-    if (info.version == 0x1020) {
+    switch (info.version) {
+    case 0x1020:
         info.width = tnt[1];
         info.height = tnt[2];
         info.flag = tnt[9];
@@ -97,12 +98,13 @@ void FUN_00483610()
         info.tile_set_count = tnt[6];
         info.tile_set_src = (int*)(tnt[5] + (int)tnt);
         info.tile_map_src = (int*)(tnt[3] + (int)tnt);
-        info.attr_b = (unsigned char*)(tnt[4] + (int)tnt);
         info.attr_a = 0;
+        info.attr_b = (unsigned char*)(tnt[4] + (int)tnt);
         info.attr_limit = 0xfc;
         info.feature_flags = info.feature_flags ^ ((tnt[0xf] ^ info.feature_flags) & 1);
         info.feature_data = (unsigned short*)(tnt[0xe] + (int)tnt);
-    } else if (info.version == 0x2000) {
+        break;
+    case 0x2000:
         info.width = tnt[1];
         info.height = tnt[2];
         info.flag = tnt[9];
@@ -119,9 +121,11 @@ void FUN_00483610()
         info.attr_limit = 0xfffb;
         info.feature_flags = info.feature_flags ^ ((tnt[0xb] ^ info.feature_flags) & 1);
         info.feature_data = (unsigned short*)(tnt[10] + (int)tnt);
-    } else {
+        break;
+    default:
         sprintf(text, "Unknown TNT version:  0x%08x", info.version);
         FUN_004b6290(text);
+        break;
     }
     // REGION r1 end
 
