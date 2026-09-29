@@ -27,7 +27,7 @@ public:
     int FUN_00435100();
 };
 
-void __stdcall FUN_00482910(void* pos, short a, short b, int c);
+void __stdcall FUN_00482910(void* pos, int a, int b, int c);
 unsigned char __stdcall FUN_0044fe40(int id);
 void __stdcall FUN_00439eb0(void* unit, int flag);
 void __stdcall FUN_0047f8c0(void* unit);
@@ -55,10 +55,8 @@ void __stdcall FUN_0047bd70(void* player);
 // FUNCTION: 0x4866d0
 void __stdcall FUN_004866d0(unsigned char* cmd, int param)
 {
-    char text[100];
     bool credited;
     char* unit;
-    char* killer;
 
     if (at<unsigned short>(cmd, 1) == 0)
         unit = 0;
@@ -71,11 +69,12 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
         FUN_00482910(unit + 0x6a, at<short>((void*)at<int>(unit, 0x92), 0x202),
                      at<short>((void*)at<int>(unit, 0x92), 0x170), 0x3c);
     }
+    char* parent;
     if (at<unsigned short>(cmd, 7) == 0)
-        killer = 0;
+        parent = 0;
     else
-        killer = (char*)(at<int>((void*)DAT_00511de8, 0x14357) + at<unsigned short>(cmd, 7) * 0x118);
-    at<char*>(unit, 0xf0) = killer;
+        parent = (char*)(at<int>((void*)DAT_00511de8, 0x14357) + at<unsigned short>(cmd, 7) * 0x118);
+    at<char*>(unit, 0xf0) = parent;
     at<unsigned char>(unit, 0xf4) = FUN_0044fe40(at<int>(cmd, 3));
     ((Class_004904c0*)at<void*>((void*)DAT_00511de8, 0x391ed))->FUN_004904c0(unit);
     FUN_00439eb0(unit, 1);
@@ -85,7 +84,8 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
     if (at<int>(unit, 0x86) != 0)
         FUN_0048aac0(unit, 0, -1, 1);
     while (at<int>(unit, 0x8a) != 0) {
-        FUN_00489bb0(killer, (void*)at<int>(unit, 0x8a), 30000, (unsigned char)(((cmd[10] & 0xf0) != 0x30 ? 3 : 0) + 3), 0);
+        unsigned char depth = (unsigned char)(((cmd[10] & 0xf0) != 0x30 ? 3 : 0) + 3);
+        FUN_00489bb0(at<char*>(unit, 0xf0), (void*)at<int>(unit, 0x8a), 30000, depth, 0);
         FUN_0048aac0((void*)at<int>(unit, 0x8a), 0, -1, 1);
     }
     FUN_0047cbd0(unit);
@@ -112,9 +112,9 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
                     at<short>((void*)DAT_00511de8, at<unsigned char>(unit, 0xf4) * 0x14b + 0x1c67)++;
                 at<short>((void*)at<int>(unit, 0x96), 0x106)++;
             }
-            if (killer != 0 && at<float>(unit, 0x104) == 0.0f
+            if (at<char*>(unit, 0xf0) != 0 && at<float>(unit, 0x104) == 0.0f
                 && at<char>(unit, 0xff) != at<char>(unit, 0xf4)) {
-                at<short>(killer, 0xb8)++;
+                at<short>(at<char*>(unit, 0xf0), 0xb8)++;
             }
             if (at<char>(unit, 0xf4) == at<char>((void*)DAT_00511de8, 0x2a42))
                 FUN_00494ff0(5);
@@ -178,6 +178,7 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
                 } while (i != 0);
                 at<unsigned char>(rec, 0x1cab) = best;
                 if (best == 0) {
+                    char text[100];
                     char* fmt = FUN_004c5740(DAT_00508bf0);
                     sprintf(text, fmt);
                     FUN_00463ca0(text, 2, 0, 10);
@@ -187,19 +188,19 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
         if (at<char>((void*)DAT_00511de8, 0x37f06) < 0)
             FUN_004948b0(at<unsigned char>(unit, 0xf4), at<unsigned char>((void*)at<int>(unit, 0x96), 0x146));
     }
-    if ((cmd[10] & 0xf0) == 0x50 && killer != 0) {
+    if ((cmd[10] & 0xf0) == 0x50 && at<char*>(unit, 0xf0) != 0) {
         float f = (1.0f - at<float>(unit, 0x104)) * at<float>((void*)at<int>(unit, 0x92), 0x18a);
-        void* vt = (void*)at<int>(killer, 0xec);
+        void* vt = (void*)at<int>(at<char*>(unit, 0xf0), 0xec);
         if (*(int*)vt == 0 || at<char>(vt, 0x73) != 2) {
-            f = f + at<float>(killer, 0xd4);
+            f = f + at<float>(at<char*>(unit, 0xf0), 0xd4);
         } else if (at<int>((void*)DAT_00511de8, 0x37eee) == 0) {
-            f = at<float>(killer, 0xd4) - f * -0.5f;
+            f = at<float>(at<char*>(unit, 0xf0), 0xd4) - f * -0.5f;
         } else if (at<int>((void*)DAT_00511de8, 0x37eee) != 1) {
-            f = f + at<float>(killer, 0xd4);
+            f = f + at<float>(at<char*>(unit, 0xf0), 0xd4);
         } else {
-            f = at<float>(killer, 0xd4) - f * -0.7f;
+            f = at<float>(at<char*>(unit, 0xf0), 0xd4) - f * -0.7f;
         }
-        at<float>(killer, 0xd4) = f;
+        at<float>(at<char*>(unit, 0xf0), 0xd4) = f;
     }
     if (at<char>(cmd, 9) > 0 && at<float>(unit, 0x104) == 0.0f)
         FUN_0049b000(unit, (cmd[10] & 0xf0) == 0x30);
