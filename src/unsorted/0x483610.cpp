@@ -193,12 +193,32 @@ void FUN_00483610()
         plot += 0xd;
     }
     FUN_00421f20(&info.version);
-    if (info.attr_a == 0) {
-        if (info.attr_b != 0) {
+    if (info.attr_b != 0) {
+        unsigned char* q = *(unsigned char**)&tmp0[35];
+        unsigned char* src = info.attr_b;
+        for (int i = info.map_size; i > 0; i--) {
+            q[4] = *src;
+            q[7] = src[6];
+            q[0xc] = (q[0xc] & 0xd7) | 0x50;
+            q += 0xd;
+            src += 8;
+        }
+        if (*(int*)(DAT_00511de8 + 0x38d6b) == 0) {
+            q = *(unsigned char**)&tmp0[35];
+            src = info.attr_b + 2;
+            for (int i = info.map_size; i > 0; i--) {
+                if (*src < info.attr_limit)
+                    FUN_00423c50(q, *src, 0, 0, 10);
+                q += 0xd;
+                src += 8;
+            }
+            FUN_00423160();
+        }
+    } else {
+        if (info.attr_a != 0) {
             unsigned char* q = *(unsigned char**)&tmp0[35];
-            unsigned char* src = info.attr_b;
-            cells2 = info.map_size;
-            for (int i = 0; i < info.map_size; i++) {
+            unsigned char* src = info.attr_a;
+            for (int i = info.map_size; i > 0; i--) {
                 q[4] = *src;
                 q[0xc] = (q[0xc] & 0xd7) | 0x50;
                 if (*(short*)(src + 1) == -4)
@@ -206,38 +226,16 @@ void FUN_00483610()
                 q += 0xd;
                 src += 4;
             }
-            if (*(int*)(DAT_00511de8 + 0x38d6b) == 0) {
+            if (*(int*)(DAT_00511de8 + 0x38d6b) == 0 && info.map_size > 0) {
                 q = *(unsigned char**)&tmp0[35];
-                unsigned short* sp = (unsigned short*)(info.attr_b + 1);
-                for (int i = 0; i < info.map_size; i++) {
+                unsigned short* sp = (unsigned short*)(info.attr_a + 1);
+                for (int i = info.map_size; i > 0; i--) {
                     if ((int)*sp < info.attr_limit)
                         FUN_00423c50(q, *sp, 0, 0, 10);
                     q += 0xd;
                     sp += 2;
                 }
                 FUN_00423160();
-            }
-        }
-    } else {
-        if (info.map_size > 0) {
-            unsigned char* q = *(unsigned char**)&tmp0[35] + 0xc;
-            unsigned char* src = info.attr_a;
-            for (int i = info.map_size; i > 0; i--) {
-                q[-8] = *src;
-                q[-5] = src[6];
-                *q = (*q & 0xd7) | 0x50;
-                q += 0xd;
-                src += 8;
-            }
-        }
-        if (*(int*)(DAT_00511de8 + 0x38d6b) == 0 && info.map_size > 0) {
-            unsigned char* q = *(unsigned char**)&tmp0[35];
-            unsigned char* src = info.attr_a + 2;
-            for (int i = info.map_size; i > 0; i--) {
-                if ((int)*src < info.attr_limit)
-                    FUN_00423c50(q, *src, 0, 0, 10);
-                q += 0xd;
-                src += 8;
             }
         }
     }
