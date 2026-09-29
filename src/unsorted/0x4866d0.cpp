@@ -98,18 +98,18 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
     switch (cmd[10] >> 4) {
     case 1:
     case 6:
-    case 5:
+    credit:
         if (at<int>(unit, 0x96) != 0) {
             at<short>((void*)at<int>(unit, 0x96), 0xfe)++;
             if (at<unsigned char>(unit, 0xf4) != 10 && at<float>(unit, 0x104) == 0.0f
                 && at<unsigned char>(unit, 0xff) != at<unsigned char>(unit, 0xf4)) {
-                at<short>((void*)DAT_00511de8, at<unsigned char>(unit, 0xf4) * 0x14b + 0x1c5f)++;
+                at<short>((char*)DAT_00511de8 + at<unsigned char>(unit, 0xf4) * 0x14b, 0x1c5f)++;
             }
             if (FUN_004f8a70((unsigned char*)DAT_00511de8 + 0x37f5f
                                  + at<unsigned char>((void*)at<int>((void*)at<int>(unit, 0x96), 0x27), 0x95) * 0x232,
                              (unsigned char*)at<int>(unit, 0x92) + 0x20) == 0) {
                 if (at<unsigned char>(unit, 0xf4) != 10)
-                    at<short>((void*)DAT_00511de8, at<unsigned char>(unit, 0xf4) * 0x14b + 0x1c67)++;
+                    at<short>((char*)DAT_00511de8 + at<unsigned char>(unit, 0xf4) * 0x14b, 0x1c67)++;
                 at<short>((void*)at<int>(unit, 0x96), 0x106)++;
             }
             if (at<char*>(unit, 0xf0) != 0 && at<float>(unit, 0x104) == 0.0f
@@ -136,6 +136,9 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
         }
         break;
     }
+    case 5:
+        if (at<unsigned char>(unit, 0xf4) != 10 && at<char>(unit, 0xf4) != at<char>(unit, 0xff))
+            goto credit;
     }
     if (credited && at<unsigned char>(unit, 0xf4) != 10) {
         char* rec = (char*)DAT_00511de8 + at<unsigned char>(unit, 0xf4) * 0x14b;
