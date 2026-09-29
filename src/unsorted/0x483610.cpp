@@ -285,9 +285,10 @@ void FUN_00483610()
     else
         obj[0] = (int)operator new(total * 2);
     *(unsigned short*)(DAT_00511de8 + 0x14281) &= 0xfff7;
-    cells2 = 0;
+    pic.width = 0;
+    pic.height = 0;
     cells = *(unsigned short*)(DAT_00511de8 + 0x14233) | (*(unsigned short*)(DAT_00511de8 + 0x14237) << 16);
-    FUN_00483210(cells2, cells);
+    FUN_00483210(*(int*)&pic, cells);
     // REGION r4 end
 
     // REGION r5 begin
