@@ -1,17 +1,19 @@
 // Decompiled by DeepSeek V4.1 Flash. Names are provisional.
-// NOT a match: 48.1% (1166 bytes against 1180). All g_game offsets, the pool
-// arithmetic and the callee sequence are right. What still differs:
-//  - frame is 0x2c; the original is 0x30 (it spills the pool pointer to
-//    [esp+0x14] for the memset that zeroes the pool, see around 0x48553d).
-//  - register allocation in the setup: the original clears field_14373 in ebx
-//    and keeps the pool in ebp, we use edx/edi.
-//  - the free-list linking loop (0x48587e..0x48592e) keeps slot in esi and the
-//    end pointer in edx; we have slot in edx and end in ecx, and the compiler
-//    folds q+0xff into the addressing (`[ecx-0x69]`) where the original uses a
-//    plain cursor (`[ecx+0xff]`).
-//  - the inlined std::sort (0x48562b..0x48587e) has the right callee sequence
-//    (FUN_00488920, FUN_00485940, FUN_00488960, FUN_00488810) but the
-//    comparator is not inlined at every site the original inlines it.
+// NOT a match: 80.2% (1208 bytes against 1180). The pool setup, the inlined
+// std::sort over the ten player pointers and the free-list linking all have the
+// right shape. What still differs:
+//  - FUN_00485940 is DEFINED here (not just declared) so MSVC inlines it at the
+//    direct compare sites; that alone took the score from 57.6% to 80.2%. The
+//    out-of-line helpers (FUN_00488920 / 60 / 810) still take it by pointer.
+//  - the pool local is kept in ebx; the original keeps it in ebp.
+//  - call-cleanup: our std::_Sort / std::_Unguarded_partition calls are made
+//    __cdecl (extra `add esp`); the original TU was compiled with __stdcall as
+//    the default (/Gz). Re-checking with /Gz scores 78.5%, so the default flags
+//    are still the better base and the sort tails need to be hand-written with
+//    explicit __stdcall helper declarations (see src/unsorted/0x43bc90.cpp).
+//  - the free-list linking loop keeps slot/end in different registers and the
+//    compiler folds q+0xff into the addressing where the original uses a plain
+//    cursor.
 
 #include <algorithm>
 #include <string.h>
