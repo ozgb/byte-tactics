@@ -1,7 +1,17 @@
 // Decompiled by DeepSeek V4.1 Flash. Names are provisional.
-// NOT a match. The unit-pool setup and the pool/free-list linking are in place;
-// what still differs is the inlined std::sort over the ten player pointers
-// (0x48562b..0x48587e). See the note at the bottom.
+// NOT a match: 48.1% (1166 bytes against 1180). All g_game offsets, the pool
+// arithmetic and the callee sequence are right. What still differs:
+//  - frame is 0x2c; the original is 0x30 (it spills the pool pointer to
+//    [esp+0x14] for the memset that zeroes the pool, see around 0x48553d).
+//  - register allocation in the setup: the original clears field_14373 in ebx
+//    and keeps the pool in ebp, we use edx/edi.
+//  - the free-list linking loop (0x48587e..0x48592e) keeps slot in esi and the
+//    end pointer in edx; we have slot in edx and end in ecx, and the compiler
+//    folds q+0xff into the addressing (`[ecx-0x69]`) where the original uses a
+//    plain cursor (`[ecx+0xff]`).
+//  - the inlined std::sort (0x48562b..0x48587e) has the right callee sequence
+//    (FUN_00488920, FUN_00485940, FUN_00488960, FUN_00488810) but the
+//    comparator is not inlined at every site the original inlines it.
 
 #include <algorithm>
 #include <string.h>
@@ -22,8 +32,8 @@ struct Player_004854a0 {
 #pragma pack(push, 1)
 struct Game_004854a0 {
     char unknown_0[0x1b63];
-    Player_004854a0 players[10];        // +0x1b63, stride 0x14b
-    char unknown_2871[0x1434f - 0x2871];
+    unsigned char players[10 * 0x14b];  // +0x1b63, stride 0x14b
+    char unknown_2851[0x1434f - 0x2851];
     unsigned short field_1434f;         // +0x1434f
     unsigned short poolCount;           // +0x14351
     char unknown_14353[0x14357 - 0x14353];
@@ -73,7 +83,7 @@ void __stdcall FUN_004854a0(void)
     Player_004854a0* v[10];
     int k;
     for (k = 0; k < 10; k++)
-        v[k] = &g_game->players[k];
+        v[k] = (Player_004854a0*)(g_game->players + k * 0x14b);
 
     std::sort(v, v + 10, FUN_00485940);
 
@@ -97,9 +107,3 @@ void __stdcall FUN_004854a0(void)
     }
 }
 
-// Still to fix: the std::sort call above has to inline exactly as the original
-// does (0x48562b fill, 0x485657 insertion sort of ten pointers using the
-// inlined FUN_00485940 compare and an out-of-line FUN_00488920 unguarded
-// insert, 0x4856c7 the dead __introsort_loop body, 0x48578e the tail merge).
-// Everything before 0x48562b and the final linking loop from 0x48587e are a
-// first cut and not yet scored.
