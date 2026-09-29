@@ -47,7 +47,10 @@ void __stdcall FUN_0049b000(void* unit, int flag);
 void __stdcall FUN_00486360(void* unit, int a, int b);
 void __stdcall FUN_00489740(void* unit);
 void __stdcall FUN_0045aaa0(void* state);
-void __cdecl FUN_0043dd10(void* p);
+class Class_0043dd10 {
+public:
+    void FUN_0043dd10();
+};
 void operator delete(void* p);
 void __stdcall FUN_00450380(int id);
 void __stdcall FUN_0047bd70(void* player);
@@ -220,7 +223,7 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
         at<int>(unit, 0x9e) = 0;
     }
     if (*(int*)unit != 0) {
-        FUN_0043dd10((void*)*(int*)unit);
+        ((Class_0043dd10*)*(int*)unit)->FUN_0043dd10();
         operator delete((void*)*(int*)unit);
         *(int*)unit = 0;
     }
