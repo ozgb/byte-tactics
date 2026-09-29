@@ -142,19 +142,19 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
     }
     }
     if (credited && at<unsigned char>(unit, 0xf4) != 10) {
-        char* rec = (char*)DAT_00511de8 + at<unsigned char>(unit, 0xf4) * 0x14b;
-        if (at<int>(rec, 0x1b63) != 0
-            && (at<char>(rec, 0x1bd6) == 1 || at<char>(rec, 0x1bd6) == 2 || at<char>(rec, 0x1bd6) == 3)
-            && at<char>(rec, 0x1ca9) != 10
+        char* rec = (char*)DAT_00511de8 + at<unsigned char>(unit, 0xf4) * 0x14b + 0x1b63;
+        if (at<int>(rec, 0) != 0
+            && (at<char>(rec, 0x73) == 1 || at<char>(rec, 0x73) == 2 || at<char>(rec, 0x73) == 3)
+            && at<char>(rec, 0x146) != 10
             && (((Class_00435100*)at<void*>((void*)DAT_00511de8, 0x391e9))->FUN_00435100() == 3
                 || ((Class_00435100*)at<void*>((void*)DAT_00511de8, 0x391e9))->FUN_00435100() == 2)
-            && at<unsigned char>(rec, 0x1cab) != 0) {
-            unsigned char rank = at<unsigned char>(rec, 0x1cab);
+            && at<unsigned char>(rec, 0x148) != 0) {
+            unsigned char rank = at<unsigned char>(rec, 0x148);
             int mine;
             if (at<int>((void*)DAT_00511de8, 0x37ef6) == 2)
-                mine = at<short>(rec, 0x1c67);
+                mine = at<short>(rec, 0x104);
             else
-                mine = at<short>(rec, 0x1c5f);
+                mine = at<short>(rec, 0xfc);
             int i = 10;
             int* p = (int*)((char*)DAT_00511de8 + 0x1b8a);
             unsigned char best = rank;
@@ -175,12 +175,12 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
                 i = 10;
                 unsigned char* q = (unsigned char*)DAT_00511de8 + 0x1cab;
                 do {
-                    if (best <= *q && *q < at<unsigned char>(rec, 0x1cab))
+                    if (best <= *q && *q < at<unsigned char>(rec, 0x148))
                         *q = *q + 1;
                     q += 0x14b;
                     i--;
                 } while (i != 0);
-                at<unsigned char>(rec, 0x1cab) = best;
+                at<unsigned char>(rec, 0x148) = best;
                 if (best == 0) {
                     char text[100];
                     char* fmt = FUN_004c5740(DAT_00508bf0);
