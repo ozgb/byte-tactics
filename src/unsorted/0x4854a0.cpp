@@ -70,8 +70,9 @@ void __stdcall FUN_004854a0(void)
     unsigned char* pool = g_game->pool = (unsigned char*)FUN_004d83b0("UNIT MEMORY", g_game->poolCount * 0x118);
     memset(pool, 0, g_game->poolCount * 0x118);
 
-    g_game->hotUnits = FUN_004d83b0("HOT UNITS", g_game->unitsPerPlayer * 0x14);
-    g_game->hotRadar = FUN_004d83b0("HOT RADAR UNITS", g_game->unitsPerPlayer * 100);
+    unsigned int ten = g_game->unitsPerPlayer * 10;
+    g_game->hotUnits = FUN_004d83b0("HOT UNITS", ten * 2);
+    g_game->hotRadar = FUN_004d83b0("HOT RADAR UNITS", ten * 10);
     g_game->field_1435b = g_game->pool + g_game->poolCount * 0x118 - 0x118;
 
     unsigned short n;
