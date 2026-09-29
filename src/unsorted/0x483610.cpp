@@ -285,27 +285,25 @@ void FUN_00483610()
         list[0] = 0;
         obj = list;
     }
-    int rows = 2;
-    a.n = 2;
+    int rb = 2;
     *(int**)((char*)tmp0 + 0x24) = obj;
+    a.n = 2;
     if (mw % 32 != 0)
         a.n = 3;
     if (mh % 32 != 0)
-        rows = 3;
-    rows = *(int*)((char*)tmp0 + 0x44) / 2 + rows;
-    a.n = *(int*)((char*)tmp0 + 0x40) / 2 + a.n;
-    obj[1] = a.n;
+        rb = 3;
+    int rows = *(int*)((char*)tmp0 + 0x44) / 2 + rb;
+    int cols = *(int*)((char*)tmp0 + 0x40) / 2 + a.n;
+    obj[1] = cols;
     obj[2] = rows;
     operator delete((void*)obj[0]);
-    unsigned int total = (rows * a.n + 7U) & 0xfffffff8;
+    unsigned int total = (rows * cols + 7U) & 0xfffffff8;
     obj[3] = total;
     if (total == 0)
         obj[0] = 0;
     else
         obj[0] = (int)operator new(total * 2);
     *(unsigned short*)(DAT_00511de8 + 0x14281) &= 0xfff7;
-    pic.width = 0;
-    pic.height = 0;
     b.p.x = 0;
     b.p.y = 0;
     a.p.x = *(short*)(DAT_00511de8 + 0x14233);
