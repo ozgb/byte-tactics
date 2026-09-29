@@ -187,7 +187,7 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
                 if (best == 0) {
                     char text[100];
                     char* fmt = FUN_004c5740(DAT_00508bf0);
-                    sprintf(text, fmt);
+                    sprintf(text, fmt, rec + 0x2b, (int)at<short>(rec, at<int>((void*)DAT_00511de8, 0x37ef6) == 2 ? 0x104 : 0xfc));
                     FUN_00463ca0(text, 2, 0, 10);
                 }
             }
