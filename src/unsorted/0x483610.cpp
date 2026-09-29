@@ -151,9 +151,9 @@ void FUN_00483610()
         *(int*)((char*)tmp0 + 0x64) = info.sea_b;
     a.n = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd3c);
     if (a.n >= 0 && info.version >= 0x2000)
-        *(int*)((char*)tmp0 + 0x68) = (int)(a.n * 65536.0 / 900.0);
+        *(int*)((char*)tmp0 + 0x68) = (int)((a.n * 65536.0) * 0.0011111111111111111);
     else if (info.sea_d != 0)
-        *(int*)((char*)tmp0 + 0x68) = (int)(info.sea_d * 65536.0 / 900.0);
+        *(int*)((char*)tmp0 + 0x68) = (int)((info.sea_d * 65536.0) * 0.0011111111111111111);
     else
         *(int*)((char*)tmp0 + 0x68) = 0x1fdb;
     if (*(float*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd40) >= 0.0f)
