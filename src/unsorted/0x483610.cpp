@@ -181,13 +181,13 @@ void FUN_00483610()
     int* dst = (int*)FUN_004d83b0("TILE MAP", cells * 2);
     tmp0[36] = (int)dst;
     memcpy(dst, info.tile_map_src, cells * 2);
-    info.map_size = tmp0[14] * tmp0[15];
-    unsigned char* plot = (unsigned char*)FUN_004d83b0("PLOT MEMORY", info.map_size * 0xd);
+    cells = tmp0[14] * tmp0[15];
+    unsigned char* plot = (unsigned char*)FUN_004d83b0("PLOT MEMORY", cells * 0xd);
     tmp0[35] = (int)plot;
     int fill = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd30);
     if (fill < 0 || info.version < 0x2000)
         fill = 0;
-    for (int i = info.map_size; i > 0; i--) {
+    for (int i = cells; i > 0; i--) {
         plot[0xc] &= 0xfc;
         *(unsigned short*)plot = 0;
         *(unsigned short*)(plot + 2) = 0;
@@ -197,46 +197,55 @@ void FUN_00483610()
     }
     FUN_00421f20(&info.version);
     if (info.attr_b != 0) {
-        unsigned char* q = *(unsigned char**)&tmp0[35];
-        unsigned char* src = info.attr_b;
-        for (int i = info.map_size; i > 0; i--) {
-            q[4] = *src;
-            q[7] = src[6];
-            q[0xc] = (q[0xc] & 0xd7) | 0x50;
-            q += 0xd;
-            src += 8;
+        if (cells > 0) {
+            unsigned char* q = *(unsigned char**)&tmp0[35];
+            unsigned char* src = info.attr_b;
+            for (int i = cells; i > 0; i--) {
+                q[4] = *src;
+                q[7] = src[6];
+                q[0xc] = (q[0xc] & 0xd7) | 0x50;
+                q += 0xd;
+                src += 8;
+            }
         }
-        if (*(int*)(DAT_00511de8 + 0x38d6b) == 0) {
-            q = *(unsigned char**)&tmp0[35];
-            src = info.attr_b + 2;
-            for (int i = info.map_size; i > 0; i--) {
+        if (*(int*)(DAT_00511de8 + 0x38d6b) == 0 && cells > 0) {
+            unsigned char* q = *(unsigned char**)&tmp0[35];
+            unsigned char* src = info.attr_b + 2;
+            do {
                 if (*src < info.attr_limit)
                     FUN_00423c50(q, *src, 0, 0, 10);
                 q += 0xd;
                 src += 8;
-            }
-            FUN_00423160();
+                cells--;
+            } while (cells != 0);
         }
     } else {
         if (info.attr_a != 0) {
             unsigned char* q = *(unsigned char**)&tmp0[35];
             unsigned char* src = info.attr_a;
-            for (int i = info.map_size; i > 0; i--) {
-                q[4] = *src;
-                q[0xc] = (q[0xc] & 0xd7) | 0x50;
-                if (*(short*)(src + 1) == -4)
-                    FUN_00423c50(q, 0xfffc, 0, 0, 10);
-                q += 0xd;
-                src += 4;
+            cells2 = cells;
+            if (cells > 0) {
+                do {
+                    q[4] = *src;
+                    q[0xc] = (q[0xc] & 0xd7) | 0x50;
+                    if (*(short*)(src + 1) == -4)
+                        FUN_00423c50(q, 0xfffc, 0, 0, 10);
+                    q += 0xd;
+                    src += 4;
+                    cells2--;
+                } while (cells2 != 0);
             }
-            if (*(int*)(DAT_00511de8 + 0x38d6b) == 0 && info.map_size > 0) {
+            if (*(int*)(DAT_00511de8 + 0x38d6b) == 0) {
                 q = *(unsigned char**)&tmp0[35];
                 unsigned short* sp = (unsigned short*)(info.attr_a + 1);
-                for (int i = info.map_size; i > 0; i--) {
-                    if ((int)*sp < info.attr_limit)
-                        FUN_00423c50(q, *sp, 0, 0, 10);
-                    q += 0xd;
-                    sp += 2;
+                if (cells > 0) {
+                    do {
+                        if ((int)*sp < info.attr_limit)
+                            FUN_00423c50(q, *sp, 0, 0, 10);
+                        q += 0xd;
+                        sp += 2;
+                        cells--;
+                    } while (cells != 0);
                 }
                 FUN_00423160();
             }
