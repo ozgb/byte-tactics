@@ -245,18 +245,18 @@ void FUN_00483610()
 
     // REGION r4 begin
     unsigned int* set = (unsigned int*)FUN_004d83b0("TILE SET", info.tile_set_count * 0x400 + 8);
-    *(unsigned int**)(game + 0x14283) = set;
+    *(unsigned int**)((char*)tmp0 + 0x88) = set;
     *set = info.tile_set_count;
-    *(int*)(*(int*)(game + 0x14283) + 4) = *(int*)(game + 0x14283) + 8;
-    memcpy(*(void**)(*(int*)(game + 0x14283) + 4), info.tile_set_src, info.tile_set_count * 0x400);
+    *(int*)(*(int*)((char*)tmp0 + 0x88) + 4) = *(int*)((char*)tmp0 + 0x88) + 8;
+    memcpy(*(void**)(*(int*)((char*)tmp0 + 0x88) + 4), info.tile_set_src, info.tile_set_count * 0x400);
     FUN_004d85a0(tnt);
     ((Class_00433130*)&DAT_0051e6a0)->FUN_00433130();
     int mw = *(int*)(DAT_00511de8 + 0x37e37);
     int mh = *(int*)(DAT_00511de8 + 0x37e3b);
-    *(int*)(game + 0x1423b) = mw / 16;
-    *(int*)(game + 0x1423f) = mh / 16;
-    *(int*)(game + 0x14243) = mw / 32;
-    *(int*)(game + 0x14247) = mh / 32;
+    *(int*)((char*)tmp0 + 0x40) = mw / 16;
+    *(int*)((char*)tmp0 + 0x44) = mh / 16;
+    *(int*)((char*)tmp0 + 0x48) = mw / 32;
+    *(int*)((char*)tmp0 + 0x4c) = mh / 32;
     int* list = (int*)operator new(0x10);
     int* obj = 0;
     if (list != 0) {
@@ -268,13 +268,13 @@ void FUN_00483610()
     }
     int rows = 2;
     cells = 2;
-    *(int**)(game + 0x1421f) = obj;
+    *(int**)((char*)tmp0 + 0x24) = obj;
     if (mw % 32 != 0)
         cells = 3;
     if (mh % 32 != 0)
         rows = 3;
-    rows = *(int*)(game + 0x1423f) / 2 + rows;
-    cells = *(int*)(game + 0x1423b) / 2 + cells;
+    rows = *(int*)((char*)tmp0 + 0x44) / 2 + rows;
+    cells = *(int*)((char*)tmp0 + 0x40) / 2 + cells;
     obj[1] = cells;
     obj[2] = rows;
     operator delete((void*)obj[0]);
@@ -285,8 +285,9 @@ void FUN_00483610()
     else
         obj[0] = (int)operator new(total * 2);
     *(unsigned short*)(DAT_00511de8 + 0x14281) &= 0xfff7;
+    cells2 = 0;
     cells = *(unsigned short*)(DAT_00511de8 + 0x14233) | (*(unsigned short*)(DAT_00511de8 + 0x14237) << 16);
-    FUN_00483210(0, cells);
+    FUN_00483210(cells2, cells);
     // REGION r4 end
 
     // REGION r5 begin
