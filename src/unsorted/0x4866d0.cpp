@@ -27,14 +27,14 @@ public:
     int FUN_00435100();
 };
 
-void __stdcall FUN_00482910(void* pos, int a, int b, int c);
+void __stdcall FUN_00482910(void* pos, short a, short b, int c);
 unsigned char __stdcall FUN_0044fe40(int id);
 void __stdcall FUN_00439eb0(void* unit, int flag);
 void __stdcall FUN_0047f8c0(void* unit);
 void __stdcall FUN_00480250(void* unit, int flag);
 void __stdcall FUN_0049c880(void* unit);
-void __stdcall FUN_0048aac0(void* unit, int a, int b, int c);
-void __stdcall FUN_00489bb0(void* a, void* b, int c, int d);
+void __stdcall FUN_0048aac0(void* unit, int a, char b, int c);
+void __stdcall FUN_00489bb0(void* a, void* b, int c, int d, int e);
 void __stdcall FUN_0047cbd0(void* unit);
 void __stdcall FUN_00482090(void* unit);
 int __cdecl FUN_004f8a70(unsigned char* a, unsigned char* b);
@@ -68,7 +68,7 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
         return;
 
     if (at<char>((void*)at<int>(unit, 0x96), 0x146) == at<char>((void*)DAT_00511de8, 0x2a43)) {
-        FUN_00482910(unit + 0x6a, at<unsigned short>((void*)at<int>(unit, 0x92), 0x202),
+        FUN_00482910(unit + 0x6a, at<short>((void*)at<int>(unit, 0x92), 0x202),
                      at<short>((void*)at<int>(unit, 0x92), 0x170), 0x3c);
     }
     if (at<unsigned short>(cmd, 7) == 0)
@@ -83,10 +83,10 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
     FUN_00480250(unit, -1);
     FUN_0049c880(unit);
     if (at<int>(unit, 0x86) != 0)
-        FUN_0048aac0(unit, 0, 0xff, 1);
+        FUN_0048aac0(unit, 0, -1, 1);
     while (at<int>(unit, 0x8a) != 0) {
-        FUN_00489bb0(killer, (void*)at<int>(unit, 0x8a), 30000, 0);
-        FUN_0048aac0((void*)at<int>(unit, 0x8a), 0, 0xff, 1);
+        FUN_00489bb0(killer, (void*)at<int>(unit, 0x8a), 30000, (unsigned char)(((cmd[10] & 0xf0) != 0x30 ? 3 : 0) + 3), 0);
+        FUN_0048aac0((void*)at<int>(unit, 0x8a), 0, -1, 1);
     }
     FUN_0047cbd0(unit);
     if ((at<unsigned char>((void*)DAT_00511de8, 0x14281) & 2) == 2)
