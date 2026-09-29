@@ -77,8 +77,8 @@ void __stdcall FUN_004854a0(void)
 
     unsigned short n;
     for (n = 0; n < g_game->poolCount; n++) {
-        *(unsigned short*)(g_game->pool + n * 0x118 + 0xa8) = n;
-        *(unsigned int*)(g_game->pool + n * 0x118 + 0x92) = g_game->field_1439b;
+        *(unsigned short*)(pool + n * 0x118 + 0xa8) = n;
+        *(unsigned int*)(pool + n * 0x118 + 0x92) = g_game->field_1439b;
     }
 
     Player_004854a0* v[10];
