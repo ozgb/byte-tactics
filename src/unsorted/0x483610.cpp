@@ -3,6 +3,20 @@
 // Map loader: reads a TNT map (version 0x1020 or 0x2000) into the game state
 // and allocates the tile map, plot memory, tile set, sort lists and the
 // mapped and eyeball memory blocks.
+//
+// STATUS: not a match. `uv run tools/check.py 0x483610` gives 1971 of 1975
+// bytes, 94.8%. The frame (0xa4), every stack slot, string and call match;
+// what is left is instruction order:
+//  - r1: the attr_a store (esp+0x4c) comes before the tile_map_src store in
+//    ours, after the attr_b pointer arithmetic in the original.
+//  - r4: the original computes rows into esi and cols into ebx and pushes the
+//    operator delete argument before the two obj stores; ours has the
+//    registers the other way round.
+//  - the attr_a path's second loop stores its count to esp+0x10 on entry.
+//  - `xor ebx, ebx` (the zero point) comes before `xor eax, eax` after the
+//    buffer allocation.
+// Two constant multiplies survive only because `(x * 65536.0) * 0.0011111111111111111`
+// is parenthesised; without it the compiler folds them into one.
 
 // SHARED begin
 #include <string.h>
