@@ -187,12 +187,17 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
                 if (best == 0) {
                     char text[100];
                     char* fmt = FUN_004c5740(DAT_00508bf0);
-                    sprintf(text, fmt, rec + 0x2b, (int)at<short>(rec, at<int>((void*)DAT_00511de8, 0x37ef6) == 2 ? 0x104 : 0xfc));
+                    short kills;
+                    if (at<int>((void*)DAT_00511de8, 0x37ef6) == 2)
+                        kills = at<short>(rec, 0x104);
+                    else
+                        kills = at<short>(rec, 0xfc);
+                    sprintf(text, fmt, rec + 0x2b, kills);
                     FUN_00463ca0(text, 2, 0, 10);
                 }
             }
         }
-        if (at<char>((void*)DAT_00511de8, 0x37f06) < 0)
+        if ((at<unsigned char>((void*)DAT_00511de8, 0x37f06) >> 7) & 1)
             FUN_004948b0(at<unsigned char>(unit, 0xf4), at<unsigned char>((void*)at<int>(unit, 0x96), 0x146));
     }
     if ((cmd[10] & 0xf0) == 0x50 && at<char*>(unit, 0xf0) != 0) {
