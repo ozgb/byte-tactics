@@ -295,8 +295,8 @@ void FUN_00483610()
     // REGION r5 begin
     FUN_00482c20();
     FUN_004833b0();
-    unsigned int total2 = (*(int*)(game + 0x14233) * *(int*)(game + 0x14237)) & 0x7fffffff;
-    unsigned int half = total2 >> 1;
+    unsigned int total2 = (unsigned int)(*(int*)(game + 0x14233) * *(int*)(game + 0x14237)) * 2;
+    unsigned int half = total2 / 4;
     int* mapped = (int*)FUN_004d83b0("MAPPED MEMORY", half);
     *(int**)(game + 0x14273) = mapped;
     memset(mapped, 0, half);
