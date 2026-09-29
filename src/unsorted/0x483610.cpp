@@ -217,16 +217,18 @@ void FUN_00483610()
                 src += 8;
             }
         }
-        if (*(int*)(DAT_00511de8 + 0x38d6b) == 0 && a.n > 0) {
+        if (*(int*)(DAT_00511de8 + 0x38d6b) == 0) {
             unsigned char* q = *(unsigned char**)&tmp0[35];
-            unsigned char* src = info.attr_b + 2;
-            do {
-                if (*src < info.attr_limit)
-                    FUN_00423c50(q, *src, 0, 0, 10);
-                q += 0xd;
-                src += 8;
-                a.n--;
-            } while (a.n != 0);
+            if (a.n > 0) {
+                unsigned char* src = info.attr_b + 2;
+                do {
+                    if (*src < info.attr_limit)
+                        FUN_00423c50(q, *src, 0, 0, 10);
+                    q += 0xd;
+                    src += 8;
+                    a.n--;
+                } while (a.n != 0);
+            }
         }
     } else {
         if (info.attr_a != 0) {
