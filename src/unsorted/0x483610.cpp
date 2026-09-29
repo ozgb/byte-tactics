@@ -130,39 +130,35 @@ void FUN_00483610()
     // REGION r1 end
 
     // REGION r2 begin
-    int gv = *(int*)(*(int*)(game + 0x391e9) + 0xd34);
-    if (gv < 0 || info.version < 0x2000)
-        *(int*)(game + 0x1425b) = info.sea_a;
+    cells = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd34);
+    if (cells >= 0 && info.version >= 0x2000)
+        *(int*)((char*)tmp0 + 0x60) = cells;
     else
-        *(int*)(game + 0x1425b) = gv;
-    gv = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd38);
-    if (gv < 0 || info.version < 0x2000)
-        *(int*)(game + 0x1425f) = info.sea_b;
+        *(int*)((char*)tmp0 + 0x60) = info.sea_a;
+    cells = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd38);
+    if (cells >= 0 && info.version >= 0x2000)
+        *(int*)((char*)tmp0 + 0x64) = cells;
     else
-        *(int*)(game + 0x1425f) = gv;
-    if (*(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd3c) < 0 || info.version < 0x2000) {
-        if (info.sea_d == 0)
-            *(int*)(game + 0x14263) = 0x1fdb;
-        else
-            *(int*)(game + 0x14263) = (int)(info.sea_d * 65536.0 * 0.0011111111111111111);
-    } else {
-        *(int*)(game + 0x14263) = (int)(*(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd3c) * 65536.0 * 0.0011111111111111111);
-    }
-    if (*(float*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd40) < 0.0f)
-        *(int*)(game + 0x14267) = 0x3f000000;
+        *(int*)((char*)tmp0 + 0x64) = info.sea_b;
+    cells = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd3c);
+    if (cells >= 0 && info.version >= 0x2000)
+        *(int*)((char*)tmp0 + 0x68) = (int)(cells * 65536.0 * 0.0011111111111111111);
+    else if (info.sea_d != 0)
+        *(int*)((char*)tmp0 + 0x68) = (int)(info.sea_d * 65536.0 * 0.0011111111111111111);
     else
-        *(int*)(game + 0x14267) = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd40);
-    *(unsigned char*)(game + 0x1427f) = (unsigned char)info.flag;
-    *(int*)(game + 0x14233) = info.width;
-    *(int*)(game + 0x14237) = info.height;
-    *(int*)(game + 0x14223) = info.width << 4;
-    *(int*)(game + 0x14227) = info.height << 4;
-    if ((info.feature_flags & 1) == 0) {
-        *(int*)(DAT_00511de8 + 0x1426b) = 0;
-    } else {
+        *(int*)((char*)tmp0 + 0x68) = 0x1fdb;
+    if (*(float*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd40) >= 0.0f)
+        *(int*)((char*)tmp0 + 0x6c) = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd40);
+    else
+        *(int*)((char*)tmp0 + 0x6c) = 0x3f000000;
+    *(unsigned char*)((char*)tmp0 + 0x84) = (unsigned char)info.flag;
+    *(int*)((char*)tmp0 + 0x38) = info.width;
+    *(int*)((char*)tmp0 + 0x3c) = info.height;
+    *(int*)((char*)tmp0 + 0x28) = info.width << 4;
+    *(int*)((char*)tmp0 + 0x2c) = info.height << 4;
+    if (info.feature_flags & 1) {
         pic.width = *info.feature_data;
         pic.height = info.feature_data[2];
-        pic.data = info.feature_data + 4;
         pic.pad0 = 0;
         pic.pad1 = 0;
         pic.flag[0] = 0;
@@ -170,10 +166,13 @@ void FUN_00483610()
         pic.flag[2] = 0;
         pic.flag[3] = 0;
         pic.zero0 = 0;
+        pic.data = info.feature_data + 4;
         pic.zero1 = 0;
         *(void**)(DAT_00511de8 + 0x1426b) = FUN_004b8da0("TED GENERATED PIC", *(int*)info.feature_data, *(int*)(info.feature_data + 2));
         FUN_004b8a80(text, *(void**)(DAT_00511de8 + 0x1426b));
         FUN_004b7f90(text, &pic, 0, 0);
+    } else {
+        *(int*)(DAT_00511de8 + 0x1426b) = 0;
     }
     // REGION r2 end
 
