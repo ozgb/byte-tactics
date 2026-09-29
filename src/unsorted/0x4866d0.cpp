@@ -146,7 +146,7 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
                 || ((Class_00435100*)at<void*>((void*)DAT_00511de8, 0x391e9))->FUN_00435100() == 2)
             && at<unsigned char>(rec, 0x1cab) != 0) {
             unsigned char rank = at<unsigned char>(rec, 0x1cab);
-            short mine;
+            int mine;
             if (at<int>((void*)DAT_00511de8, 0x37ef6) == 2)
                 mine = at<short>(rec, 0x1c67);
             else
@@ -156,7 +156,7 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
             unsigned char best = rank;
             do {
                 if ((char)p[0x13] != 0 && (at<unsigned char>((void*)*p, 0x9b) >> 6 & 1) == 0) {
-                    short theirs;
+                    int theirs;
                     if (at<int>((void*)DAT_00511de8, 0x37ef6) == 2)
                         theirs = at<short>(p, 0xdd);
                     else
