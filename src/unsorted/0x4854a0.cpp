@@ -67,8 +67,8 @@ void __stdcall FUN_004854a0(void)
     g_game->field_1434f = g_game->unitsPerPlayer;
     g_game->poolCount = (unsigned short)(g_game->unitsPerPlayer * 10 + 1);
 
-    g_game->pool = (unsigned char*)FUN_004d83b0("UNIT MEMORY", g_game->poolCount * 0x118);
-    memset(g_game->pool, 0, g_game->poolCount * 0x118);
+    unsigned char* pool = g_game->pool = (unsigned char*)FUN_004d83b0("UNIT MEMORY", g_game->poolCount * 0x118);
+    memset(pool, 0, g_game->poolCount * 0x118);
 
     g_game->hotUnits = FUN_004d83b0("HOT UNITS", g_game->unitsPerPlayer * 0x14);
     g_game->hotRadar = FUN_004d83b0("HOT RADAR UNITS", g_game->unitsPerPlayer * 100);
@@ -93,7 +93,7 @@ void __stdcall FUN_004854a0(void)
     for (i = 0; i < 10; i++) {
         Player_004854a0* item = v[i];
         int c = g_game->unitsPerPlayer * i + 1;
-        unsigned char* slot = g_game->pool + c * 0x118;
+        unsigned char* slot = pool + c * 0x118;
         *(unsigned char**)((char*)item + 0x67) = slot;
         *(unsigned char**)((char*)item + 0x6b) = slot + g_game->unitsPerPlayer * 0x118 - 0x118;
         *(unsigned short*)((char*)item + 0x6f) = *(unsigned short*)(slot + 0xa8);
