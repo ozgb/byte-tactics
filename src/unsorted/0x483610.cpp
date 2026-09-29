@@ -292,17 +292,19 @@ void FUN_00483610()
         a.n = 3;
     if (mh % 32 != 0)
         rb = 3;
-    int rows = *(int*)((char*)tmp0 + 0x44) / 2 + rb;
     int cols = *(int*)((char*)tmp0 + 0x40) / 2 + a.n;
+    int rows = *(int*)((char*)tmp0 + 0x44) / 2 + rb;
     obj[1] = cols;
     obj[2] = rows;
     operator delete((void*)obj[0]);
     unsigned int total = (rows * cols + 7U) & 0xfffffff8;
     obj[3] = total;
+    int buf;
     if (total == 0)
-        obj[0] = 0;
+        buf = 0;
     else
-        obj[0] = (int)operator new(total * 2);
+        buf = (int)operator new(total * 2);
+    obj[0] = buf;
     *(unsigned short*)(DAT_00511de8 + 0x14281) &= 0xfff7;
     b.p.x = 0;
     b.p.y = 0;
@@ -319,8 +321,8 @@ void FUN_00483610()
     int* mapped = (int*)FUN_004d83b0("MAPPED MEMORY", half);
     tmp0[30] = (int)mapped;
     memset(mapped, 0, half);
-    int sy = tmp0[17] + 0x20;
     int sx = tmp0[16] + 0xc;
+    int sy = tmp0[17] + 0x20;
     tmp0[21] = sy;
     tmp0[20] = sx;
     *tmp0 = (int)FUN_004d83b0("SORT UNIT LIST", sy * sx * 4);
