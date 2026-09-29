@@ -40,6 +40,16 @@ struct MapInfo_00483610 {
     unsigned short* feature_data;
 };
 
+struct Point_00483610 {
+    short x;
+    short y;
+};
+
+union Slot_00483610 {
+    int n;
+    Point_00483610 p;
+};
+
 class Class_004356c0 {
 public:
     int* FUN_004356c0(int index);
@@ -61,7 +71,7 @@ void __stdcall FUN_004b7f90(void* surface, void* header, int x, int y);
 void __stdcall FUN_00421f20(int* info);
 void* __stdcall FUN_00423c50(void* target, unsigned short id, void* pos, void* field_64, unsigned char owner);
 void __stdcall FUN_00423160();
-void __stdcall FUN_00483210(int size, int pos);
+void __stdcall FUN_00483210(Point_00483610 pos, Point_00483610 size);
 void FUN_00482c20();
 void FUN_004833b0();
 void FUN_00422040();
@@ -76,8 +86,8 @@ void FUN_00483610()
     MapInfo_00483610 info;
     TntHeader_00483610 pic;
     char text[64];
-    int cells;
-    int cells2;
+    Slot_00483610 a;
+    Slot_00483610 b;
     int* tnt;
 
     // REGION r1 begin
@@ -129,19 +139,19 @@ void FUN_00483610()
     // REGION r1 end
 
     // REGION r2 begin
-    cells = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd34);
-    if (cells >= 0 && info.version >= 0x2000)
-        *(int*)((char*)tmp0 + 0x60) = cells;
+    a.n = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd34);
+    if (a.n >= 0 && info.version >= 0x2000)
+        *(int*)((char*)tmp0 + 0x60) = a.n;
     else
         *(int*)((char*)tmp0 + 0x60) = info.sea_a;
-    cells = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd38);
-    if (cells >= 0 && info.version >= 0x2000)
-        *(int*)((char*)tmp0 + 0x64) = cells;
+    a.n = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd38);
+    if (a.n >= 0 && info.version >= 0x2000)
+        *(int*)((char*)tmp0 + 0x64) = a.n;
     else
         *(int*)((char*)tmp0 + 0x64) = info.sea_b;
-    cells = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd3c);
-    if (cells >= 0 && info.version >= 0x2000)
-        *(int*)((char*)tmp0 + 0x68) = (int)(cells * 65536.0 / 900.0);
+    a.n = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd3c);
+    if (a.n >= 0 && info.version >= 0x2000)
+        *(int*)((char*)tmp0 + 0x68) = (int)(a.n * 65536.0 / 900.0);
     else if (info.sea_d != 0)
         *(int*)((char*)tmp0 + 0x68) = (int)(info.sea_d * 65536.0 / 900.0);
     else
@@ -176,17 +186,17 @@ void FUN_00483610()
     // REGION r2 end
 
     // REGION r3 begin
-    cells = (tmp0[10] / 32) * (tmp0[11] / 32);
-    int* dst = (int*)FUN_004d83b0("TILE MAP", cells * 2);
+    a.n = (tmp0[10] / 32) * (tmp0[11] / 32);
+    int* dst = (int*)FUN_004d83b0("TILE MAP", a.n * 2);
     tmp0[36] = (int)dst;
-    memcpy(dst, info.tile_map_src, cells * 2);
-    cells = tmp0[14] * tmp0[15];
-    unsigned char* plot = (unsigned char*)FUN_004d83b0("PLOT MEMORY", cells * 0xd);
+    memcpy(dst, info.tile_map_src, a.n * 2);
+    a.n = tmp0[14] * tmp0[15];
+    unsigned char* plot = (unsigned char*)FUN_004d83b0("PLOT MEMORY", a.n * 0xd);
     tmp0[35] = (int)plot;
     int fill = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd30);
     if (fill < 0 || info.version < 0x2000)
         fill = 0;
-    for (int i = cells; i > 0; i--) {
+    for (int i = a.n; i > 0; i--) {
         plot[0xc] &= 0xfc;
         *(unsigned short*)plot = 0;
         *(unsigned short*)(plot + 2) = 0;
@@ -196,10 +206,10 @@ void FUN_00483610()
     }
     FUN_00421f20(&info.version);
     if (info.attr_b != 0) {
-        if (cells > 0) {
+        if (a.n > 0) {
             unsigned char* q = *(unsigned char**)&tmp0[35];
             unsigned char* src = info.attr_b;
-            for (int i = cells; i > 0; i--) {
+            for (int i = a.n; i > 0; i--) {
                 q[4] = *src;
                 q[7] = src[6];
                 q[0xc] = (q[0xc] & 0xd7) | 0x50;
@@ -207,7 +217,7 @@ void FUN_00483610()
                 src += 8;
             }
         }
-        if (*(int*)(DAT_00511de8 + 0x38d6b) == 0 && cells > 0) {
+        if (*(int*)(DAT_00511de8 + 0x38d6b) == 0 && a.n > 0) {
             unsigned char* q = *(unsigned char**)&tmp0[35];
             unsigned char* src = info.attr_b + 2;
             do {
@@ -215,36 +225,36 @@ void FUN_00483610()
                     FUN_00423c50(q, *src, 0, 0, 10);
                 q += 0xd;
                 src += 8;
-                cells--;
-            } while (cells != 0);
+                a.n--;
+            } while (a.n != 0);
         }
     } else {
         if (info.attr_a != 0) {
             unsigned char* q = *(unsigned char**)&tmp0[35];
             unsigned char* src = info.attr_a;
-            cells2 = cells;
-            if (cells > 0) {
+            b.n = a.n;
+            if (a.n > 0) {
                 do {
                     q[4] = *src;
                     q[0xc] = (q[0xc] & 0xd7) | 0x50;
-                    if (*(short*)(src + 1) == -4)
+                    if (*(unsigned short*)(src + 1) == 0xfffc)
                         FUN_00423c50(q, 0xfffc, 0, 0, 10);
                     q += 0xd;
                     src += 4;
-                    cells2--;
-                } while (cells2 != 0);
+                    b.n--;
+                } while (b.n != 0);
             }
             if (*(int*)(DAT_00511de8 + 0x38d6b) == 0) {
                 q = *(unsigned char**)&tmp0[35];
                 unsigned short* sp = (unsigned short*)(info.attr_a + 1);
-                if (cells > 0) {
+                if (a.n > 0) {
                     do {
                         if ((int)*sp < info.attr_limit)
                             FUN_00423c50(q, *sp, 0, 0, 10);
                         q += 0xd;
                         sp += 2;
-                        cells--;
-                    } while (cells != 0);
+                        a.n--;
+                    } while (a.n != 0);
                 }
                 FUN_00423160();
             }
@@ -276,18 +286,18 @@ void FUN_00483610()
         obj = list;
     }
     int rows = 2;
-    cells = 2;
+    a.n = 2;
     *(int**)((char*)tmp0 + 0x24) = obj;
     if (mw % 32 != 0)
-        cells = 3;
+        a.n = 3;
     if (mh % 32 != 0)
         rows = 3;
     rows = *(int*)((char*)tmp0 + 0x44) / 2 + rows;
-    cells = *(int*)((char*)tmp0 + 0x40) / 2 + cells;
-    obj[1] = cells;
+    a.n = *(int*)((char*)tmp0 + 0x40) / 2 + a.n;
+    obj[1] = a.n;
     obj[2] = rows;
     operator delete((void*)obj[0]);
-    unsigned int total = (rows * cells + 7U) & 0xfffffff8;
+    unsigned int total = (rows * a.n + 7U) & 0xfffffff8;
     obj[3] = total;
     if (total == 0)
         obj[0] = 0;
@@ -296,8 +306,11 @@ void FUN_00483610()
     *(unsigned short*)(DAT_00511de8 + 0x14281) &= 0xfff7;
     pic.width = 0;
     pic.height = 0;
-    cells = *(unsigned short*)(DAT_00511de8 + 0x14233) | (*(unsigned short*)(DAT_00511de8 + 0x14237) << 16);
-    FUN_00483210(*(int*)&pic, cells);
+    b.p.x = 0;
+    b.p.y = 0;
+    a.p.x = *(short*)(DAT_00511de8 + 0x14233);
+    a.p.y = *(short*)(DAT_00511de8 + 0x14237);
+    FUN_00483210(b.p, a.p);
     // REGION r4 end
 
     // REGION r5 begin
