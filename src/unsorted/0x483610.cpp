@@ -1,6 +1,6 @@
 // Decompiled by Claude Sonnet 5.5 (skeleton), regions by DeepSeek V4.1 Flash.
 // Names are provisional.
-// Map loader: reads a TNT map (info.version 0x1020 or 0x2000) into the game state
+// Map loader: reads a TNT map (version 0x1020 or 0x2000) into the game state
 // and allocates the tile map, plot memory, tile set, sort lists and the
 // mapped and eyeball memory blocks.
 
@@ -72,8 +72,7 @@ void operator delete(void* p);
 // FUNCTION: 0x483610
 void FUN_00483610()
 {
-    char* game = (char*)DAT_00511de8;
-    int* tmp0 = (int*)(game + 0x141fb);
+    int* tmp0 = (int*)(DAT_00511de8 + 0x141fb);
     MapInfo_00483610 info;
     TntHeader_00483610 pic;
     char text[64];
@@ -82,7 +81,7 @@ void FUN_00483610()
     int* tnt;
 
     // REGION r1 begin
-    tnt = ((Class_004356c0*)*(void**)(game + 0x391e9))->FUN_004356c0(1);
+    tnt = ((Class_004356c0*)*(void**)(DAT_00511de8 + 0x391e9))->FUN_004356c0(1);
     tnt = FUN_00429660(tnt);
     info.version = *tnt;
     switch (info.version) {
@@ -304,22 +303,22 @@ void FUN_00483610()
     // REGION r5 begin
     FUN_00482c20();
     FUN_004833b0();
-    unsigned int total2 = (unsigned int)(*(int*)(game + 0x14233) * *(int*)(game + 0x14237)) * 2;
+    unsigned int total2 = (unsigned int)(tmp0[14] * tmp0[15]) * 2;
     unsigned int half = total2 / 4;
     int* mapped = (int*)FUN_004d83b0("MAPPED MEMORY", half);
-    *(int**)(game + 0x14273) = mapped;
+    tmp0[30] = (int)mapped;
     memset(mapped, 0, half);
-    int sy = *(int*)(game + 0x1423f) + 0x20;
-    int sx = *(int*)(game + 0x1423b) + 0xc;
-    *(int*)(game + 0x1424f) = sy;
-    *(int*)(game + 0x1424b) = sx;
+    int sy = tmp0[17] + 0x20;
+    int sx = tmp0[16] + 0xc;
+    tmp0[21] = sy;
+    tmp0[20] = sx;
     *tmp0 = (int)FUN_004d83b0("SORT UNIT LIST", sy * sx * 4);
-    *(int*)(game + 0x141ff) = (int)FUN_004d83b0("SORT INDICES", *(int*)(game + 0x1424f) << 2);
-    *(int*)(game + 0x14203) = (int)FUN_004d83b0("SORT LINE COUNT", *(int*)(game + 0x1424f) << 1);
+    tmp0[1] = (int)FUN_004d83b0("SORT INDICES", tmp0[21] << 2);
+    tmp0[2] = (int)FUN_004d83b0("SORT LINE COUNT", tmp0[21] << 1);
     FUN_00422040();
     *(int*)(DAT_00511de8 + 0x14277) = 0;
     *(int*)(DAT_00511de8 + 0x1427b) = (int)FUN_004d83b0("EYEBALL MEMORY", 0x2d0);
-    *(int*)(game + 0x14257) = 0;
+    tmp0[23] = 0;
     *(unsigned char*)(DAT_00511de8 + 0x38d70) = 100;
     // REGION r5 end
 }
