@@ -55,7 +55,7 @@ void __stdcall FUN_0047bd70(void* player);
 // FUNCTION: 0x4866d0
 void __stdcall FUN_004866d0(unsigned char* cmd, int param)
 {
-    bool credited;
+    int credited;
     char* unit;
 
     if (at<unsigned short>(cmd, 1) == 0)
@@ -84,7 +84,7 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
     if (at<int>(unit, 0x86) != 0)
         FUN_0048aac0(unit, 0, -1, 1);
     while (at<int>(unit, 0x8a) != 0) {
-        unsigned char depth = (unsigned char)(((cmd[10] & 0xf0) != 0x30 ? 3 : 0) + 3);
+        unsigned char depth = ((cmd[10] & 0xf0) != 0x30 ? 3 : 0) + 3;
         FUN_00489bb0(at<char*>(unit, 0xf0), (void*)at<int>(unit, 0x8a), 30000, depth, 0);
         FUN_0048aac0((void*)at<int>(unit, 0x8a), 0, -1, 1);
     }
@@ -94,7 +94,7 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
     if (param == 0 && at<char>(cmd, 9) > 0) {
         ((Class_004b0a70*)at<void*>(unit, 0x9a))->FUN_004b0a70(DAT_00508be8, 0, 1, 1, at<char>(cmd, 9), 0, 0, 0);
     }
-    credited = false;
+    credited = 0;
     switch (cmd[10] >> 4) {
     case 1:
     case 6:
@@ -118,7 +118,7 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
             }
             if (at<char>(unit, 0xf4) == at<char>((void*)DAT_00511de8, 0x2a42))
                 FUN_00494ff0(5);
-            credited = true;
+            credited = 1;
         }
         break;
     case 3: {
@@ -132,7 +132,7 @@ void __stdcall FUN_004866d0(unsigned char* cmd, int param)
                              (unsigned char*)at<int>(unit, 0x92) + 0x20) == 0) {
                 at<short>((void*)at<int>(unit, 0x96), 0x106)++;
             }
-            credited = true;
+            credited = 1;
         }
         break;
     }
