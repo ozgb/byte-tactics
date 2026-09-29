@@ -141,9 +141,9 @@ void FUN_00483610()
         *(int*)((char*)tmp0 + 0x64) = info.sea_b;
     cells = *(int*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd3c);
     if (cells >= 0 && info.version >= 0x2000)
-        *(int*)((char*)tmp0 + 0x68) = (int)(cells * 65536.0 * 0.0011111111111111111);
+        *(int*)((char*)tmp0 + 0x68) = (int)(cells * 65536.0 / 900.0);
     else if (info.sea_d != 0)
-        *(int*)((char*)tmp0 + 0x68) = (int)(info.sea_d * 65536.0 * 0.0011111111111111111);
+        *(int*)((char*)tmp0 + 0x68) = (int)(info.sea_d * 65536.0 / 900.0);
     else
         *(int*)((char*)tmp0 + 0x68) = 0x1fdb;
     if (*(float*)(*(int*)(DAT_00511de8 + 0x391e9) + 0xd40) >= 0.0f)
@@ -153,8 +153,8 @@ void FUN_00483610()
     *(unsigned char*)((char*)tmp0 + 0x84) = (unsigned char)info.flag;
     *(int*)((char*)tmp0 + 0x38) = info.width;
     *(int*)((char*)tmp0 + 0x3c) = info.height;
-    *(int*)((char*)tmp0 + 0x28) = info.width << 4;
-    *(int*)((char*)tmp0 + 0x2c) = info.height << 4;
+    tmp0[10] = tmp0[14] << 4;
+    tmp0[11] = tmp0[15] << 4;
     if (info.feature_flags & 1) {
         pic.width = *info.feature_data;
         pic.height = info.feature_data[2];
@@ -176,7 +176,7 @@ void FUN_00483610()
     // REGION r2 end
 
     // REGION r3 begin
-    cells = (tmp0[11] / 32) * (tmp0[10] / 32);
+    cells = (tmp0[10] / 32) * (tmp0[11] / 32);
     int* dst = (int*)FUN_004d83b0("TILE MAP", cells * 2);
     tmp0[36] = (int)dst;
     memcpy(dst, info.tile_map_src, cells * 2);
