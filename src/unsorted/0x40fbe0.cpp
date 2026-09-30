@@ -24,6 +24,17 @@
 // `order->target->order->...` inline in the VTOL kind-comparison chain loses
 // badly (61.9%, 2009 bytes) because it drops the EDI cache of `other` without
 // freeing a callee-saved register for the zero constant.
+// deepseek-v4.1 (2nd pass): declaring the loop counter before `Weapon* weapon`
+// in the case 2 scan is byte-identical to the file (the slots follow use order,
+// not declaration order: counter [esp+0x1c], pointer [esp+0x20] in the original
+// either way); comparing `other->kind=="REPAIRUNIT"` etc. instead of the `kind`
+// copy is worse (74.1%, 1959 bytes, the temp slots stop being shared). The
+// remaining deltas are the ebp-held zero constant (original: `xor ebp,ebp` +
+// `cmp eax,ebp` + `push ebp` for the ctor zero args, ours: `test eax,eax` +
+// `push 0`), the `other` pointer cache in edi (original reloads
+// `order->target->order` before every string test), and register choice at the
+// `order->pos = order->target->pos` copy (`add eax,0x6a`/dest ecx/temp edi vs
+// `lea ecx,[eax+0x6a]`/dest edi/temp ebp, 5 bytes short overall).
 #include <stdio.h>
 // SHARED begin
 struct Vec3 {
@@ -143,8 +154,8 @@ int __stdcall FUN_0040fbe0(Unit* unit, Order* order, int flags)
             !Contains(unit->def->categories,attacker->category)) {
             if (FUN_0043b1f0(unit,attacker,1)) { order->flags=0; return 3; }
             if (unit->flags & 0x300000) {
-                Weapon* weapon=unit->weapons;
                 unsigned char i=0;
+                Weapon* weapon=unit->weapons;
                 do {
                     if ((weapon->flags&2) && (weapon->flags&0x10) && !((unsigned char)(weapon->def->flags >> 26)&1)) {
                         Unit* target=FUN_0048a190(unit,i);

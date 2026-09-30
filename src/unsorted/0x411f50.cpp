@@ -63,6 +63,17 @@
 //    resolves relocations only once the code matches, so this may not be a real
 //    difference.
 //
+// deepseek-v4.1 (later pass): confirmed the state-4 hunk is the whole remaining obstacle.
+// The original wants `fsqrt; fmul [30.0f]; fimul [i]; ftol` plus
+// `add ebx,ecx`, ours emits `fsqrt; fimul [i]; fmul [-30.0f]; ftol` and
+// `sub ebx,eax`. Tested in build/scratch/0x411f50/v1..v11.cpp by compiling with
+// cc.sh and reading the listing: every spelling whose tree keeps the int as the
+// outermost operand (v1, v2, v4, v5, v6, v8, current) folds to `fimul [i];
+// fmul [-30.0f]` with the negated sum; every spelling whose tree forces the
+// constant multiply first (v3, v7, v9, v10, v11) restores fmul-then-int order but
+// turns `fidiv [rate]` into `fxch/fdivp` and the fused `fimul` into `fild/fmulp`,
+// i.e. more differing lines than the 3 here. So fidiv + fmul + fimul look
+// unreachable for VC5 from this expression shape.
 // Re-verified by deepseek-v4.1-flash: still 96.8% (1980 bytes), first line
 // credit kept. This session re-ran the N-declarations sweep (nd1..nd24 flat at
 // 96.6%, nd60 down to 93.9%, nd180+ shorter and 83 to 86%) and ~40 more shapes
