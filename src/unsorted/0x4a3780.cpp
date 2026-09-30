@@ -80,6 +80,31 @@
 // step and flags to slots of their own and leaves frame offset 0x18 dead,
 // while this version keeps flags in ecx and shares one slot between the loop
 // pointer and step. No single source construct found so far forces it.
+// Reverse-engineered slot map of the ORIGINAL, done by deepseek-v4.1 from the
+// pushed-store trap: the `mov [esp+0x20],ecx` / `mov [esp+0x24],eax` at
+// 0x4a391a/0x4a391e execute AFTER `push 1; push esi`, so they are really frame
+// 0x08 (span) and 0x0c (step), not [esp+0x20]/[esp+0x24]; likewise the whole
+// map is frame-relative, frame 0x3c with four pushes: 0x00 orig_sel,
+// 0x04 entries, 0x08 n (then span), 0x0c step, 0x10 flags (stored 0x4a3b03,
+// reloaded 0x4a3b7e), 0x14 x0, 0x18 never touched, 0x1c x1, 0x20 y1,
+// 0x24..0x3b the 24-byte point copy. n and span really are two variables
+// sharing one slot (span is stored from ecx at 0x4a391a with no other store to
+// 0x18), so the earlier "n/span" reading was right.
+// Experiments by deepseek-v4.1, all no-ops on the score (34.7%):
+// * `int* pspan = &span; int* pstep = &step;` plus dereferences everywhere
+//   (address-taken locals) still prints 1841 bytes, so MSVC folds the
+//   pointers away instead of giving the locals slots.
+// * Reusing the loop counter as the span (`n = size + 1;` and dividing by n)
+//   scores 34.1%, frame still 0x34.
+// * `Point_004a3780 point; point = obj->point;` instead of the initialiser:
+//   identical 34.7%, 1841 bytes.
+// * The two-step y1 (`y1 = f19 + y0 - 1; y1 -= 3;`) is byte-identical to the
+//   single `- 4` form, as the earlier note said.
+// The 8 bytes are not reachable from a local source change here: the original
+// spills n/span, step and flags (three slots) and keeps y0 in ebx, while this
+// version keeps all four in registers and spills x0/x1/y1/entries instead, so
+// the register pressure that forces the original's spills lives in the body
+// shape of the 0x4a3a10..0x4a3d30 blocks, not in the declarations.
 #include <string.h>
 
 
@@ -184,9 +209,11 @@ int __stdcall FUN_004a3780(Object_004a3780* obj, int index, int param_3)
     }
     int x1 = me->field_17 + x0 - 1;
     int n = 0;
-    int y1 = me->field_19 + y0 - 4;
+    int y1 = me->field_19 + y0 - 1;
+    y1 -= 3;
     y0 += 2;
-    Point_004a3780 point = obj->point;
+    Point_004a3780 point;
+    point = obj->point;
     point.x -= entries[0].field_13;
     point.y -= entries[0].field_15;
     int i;

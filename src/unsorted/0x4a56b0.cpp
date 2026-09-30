@@ -31,6 +31,14 @@
 // frame+0x10. A named local for the bound does not fix it: the named local then
 // takes edi away from `i` (48.4%), because MSVC gives a named loop-bound local
 // a callee-saved register while an expression gets a scratch.
+// Re-tested this session (deepseek-v4.1): `int t = 0;` declared before `int i`
+// is byte-identical to the winner; `while (i < count + 1)` and an explicit
+// guarded `do/while` are both 49.3% again (i goes to memory, edi to `t`); an
+// address-taken `int* tp = &t` is neutral too, MSVC folds it back into a plain
+// `t`. The original's t codegen (`mov ebp,[esp+0x10]` / `cmp ebp,eax` /
+// `mov [esp+0x10],eax`, a load-store per use) is the shape of a memory-resident
+// variable, but no source spelling here forces the allocator to choose it while
+// keeping `i` in edi.
 // Also tried and byte-identical to the winner: `t = t + 1`, a named `int lang`
 // for the call argument, `int i; i = 1;` instead of `int i = 1;`, a named
 // `int cnt` for `entries[0].b6.count`, `!(i < ...)` for the bound test, and a

@@ -20,6 +20,11 @@
 // only the w<h branch wants this form.
 //
 // Still differs (1605 bytes against 1631):
+//  - 2026-09-30 (deepseek-v4.1), retried: making the tall (w<h) branch declare
+//    its own `void* surf` (declared after `int y`, its draws using it) does put
+//    the surface in ebp as the original has it, but re-grows the frame by 4 and
+//    scores 62.3% (source kept as build/scratch/0x4a2580/v14.cpp). So the
+//    function-scope `surface` assignment is the better of the two forms.
 //  - slot swap: the original homes the loop's walking entry pointer at the dead
 //    index slot [esp+0x58] and `surface` at [esp+0x1c]; ours homes `surface` at
 //    [esp+0x58] and the pointer at [esp+0x14]. The original keeps the w<h
