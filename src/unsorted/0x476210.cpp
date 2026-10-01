@@ -1,4 +1,28 @@
-// Decompiled by deepseek-v4.1-flash, finished by space-bunny-free, finished by deepseek-v4.1-flash. Names are provisional.
+// Decompiled by deepseek-v4.1-flash, finished by space-bunny-free, finished by deepseek-v4.1-flash, finished by mimo-v2.6-pro. Names are provisional.
+// mimo-v2.6-pro retry (#4147): still 99.6%, 636/636, the same single
+// `lea eax, [edi + edx]` (SIB 0x17) against this build's `[edx + edi]`
+// (SIB 0x3a). New negative results, all in build/scratch/0x476210/:
+//   * Header subsets of this clone's three includes: dropping <climits>, or
+//     dropping <memory> for a hand-written std::allocator (<xutility>-only or
+//     <climits>+<xutility>), give 629 bytes / 83.8% or keep 99.6%; no state
+//     between the known 0-header (635) and 3-header (636) points flips the
+//     SIB order.
+//   * Real-header fidelity: the _Tptr/_Ctptr typedef chain plus the real
+//     `explicit vector(const _A& _Al = _A())` constructor is byte-flat at
+//     99.6%.
+//   * Source shapes: a named return local inside _Ucopy and binding the third
+//     _Ucopy's discarded return are byte-flat; a re-expressed source end
+//     `_Ucopy(_P, _P + (_Last - _P), _Q + _M)` collapses to 651 bytes.
+//   * The full shipped <vector> class body with NO <stdexcept> still flips the
+//     third copy's source start to the 4-instruction form (637 bytes, 89.6%),
+//     so the lea-vs-mov/sub/add form is decided by declaration count, not by
+//     <stdexcept> alone. Sweeping the real members onto this clone in shipped
+//     order shows the flip happens at the const begin/end plus rbegin/rend
+//     group, yet every member of that group alone keeps the lea form: it is
+//     cumulative declarations, and every intermediate state along the way
+//     (typedefs, ctors, dtor, operator=, reserve/capacity) still emits the
+//     same [edx + edi] SIB. Confirms the wall below as unreachable compiler
+//     state from the original translation unit; it needs the regroup phase.
 // deepseek-v4.1-flash (#3287): tried the real-<vector> recipe of the matched
 // siblings 0x43c3a0/0x433db0 (explicit instantiation, same element size): 89.6%,
 // 637 bytes, worse than this clone's 99.6%, 636 bytes. A dest local of iterator
