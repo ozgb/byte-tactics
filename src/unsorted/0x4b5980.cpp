@@ -1,5 +1,50 @@
-// Decompiled by space-bunny-free, finished by muse-spark-1.3-free, finished by deepseek-v4.1-flash, verified by GPT-6.1-sol, finished by deepseek-v4.1-flash. Names are provisional.
-// deepseek-v4.1-flash retry 2: seven more variants, all below 89.2%.
+// Decompiled by space-bunny-free, finished by muse-spark-1.3-free, finished by deepseek-v4.1-flash, verified by GPT-6.1-sol, finished by deepseek-v4.1-flash, finished by mimo-v2.6-pro. Names are provisional.
+// mimo-v2.6-pro pass: best stays 89.2% (827 bytes, the shape below). Findings
+// for the next attempt, from about 30 scratch variants:
+//  (1) The block-2 register problem IS solvable: assign the expression to a
+//    Flags_4b5980 local (`fv.value = ...; d->flags.value = fv.value;`) and test
+//    `fv.bits.has_c4`. Block 2 then becomes byte-exact (`mov cx`/`mov ax`/
+//    `and eax,0xfc03`/`or al,1`, no al reload), 818 bytes. Declaring load
+//    locals `unsigned short vf = d->videoFlags; unsigned short ff =
+//    d->flags.value;` before the expression also fixes the `and eax,0xfc03`
+//    vs `mov ebp` scheduling swap, so the whole region from the block-2 loads
+//    through the has_c4 je is then byte-identical (variant v3).
+//  (2) But every fv-local shape rotates every register from the has_c0 test to
+//    the end of the function by one allocator slot (ours dl,al,cl,dx,al for
+//    the original cl,dl,al,cx,dl): the fv shape consumes one more invisible
+//    slot before has_c0 than the original did. Tried and all identical
+//    (70.8-73.3%, 818 bytes): plain unsigned short local, union local,
+//    chained assign `d->flags.value = fv.value = ...`, `d->flags = fv` copy,
+//    RMW chains (`fv.value = x; fv.value |= ...`), `fv.bits.opt = 1` for the
+//    `| 1`, operand swaps of the | terms, a cast-based bitfield read of a
+//    scalar local, negated test with swapped bodies, declaration-order
+//    permutations of fv/vf/ff/w/h, and with or without the pw/ph pointer
+//    locals. The rotation is not the pw/ph locals and not the load locals.
+//  (3) Any shape whose has_c4 test reads the field from memory
+//    (`d->flags.bits.has_c4`, through `fl`, through a reference alias
+//    `Flags_4b5980& fv = d->flags`, with `d->flags.value |= 1` or
+//    `bits.opt = 1` RMWs hoping for the 0x41b8d0 reuse) re-adds the 6-byte
+//    `mov al,[esi+0xf0]` reload and the base register shape (`or ecx,1`),
+//    back to 827 bytes at 89.2%: MSVC 5 does not forward the word store to
+//    the byte bitfield read. That reload tick is exactly what puts the tail
+//    register cycle back where the original has it, so block 2 and the tail
+//    cannot both be fixed with any shape tried here. Slot arithmetic: at
+//    block 2 the base shape is one slot ahead of the original (v2=dx, f2=cx)
+//    and at has_c0 on target (cl) only thanks to the reload; the fv shape is
+//    on target at block 2 (cx/ax) and one slot ahead at has_c0 (dl). The
+//    original is on target at both, so its has_c4 test consumes exactly one
+//    slot that no shape here reproduces while emitting `shr al,6/test al,1`
+//    with no reload.
+//  (4) Block 0: the early `mov cx,[esi+0x202]` position IS reachable: declare
+//    `unsigned short vf0 = d->videoFlags;` between the scratch[0] and
+//    scratch[1] stores and use it in the block-0 expression (v41, 70.8%).
+//    The load then lands exactly where the original has it, but the block-0
+//    register pair swaps (v0=eax, f0=ecx for the original's v0=ecx, f0=eax).
+//    Both locals declared there move the loads too early (809 bytes); the
+//    local at function top hoists it too far (67.8%). The block-0 swap and
+//    the tail rotation are independent allocator states.
+// The permutation search (tools/permute.py, 2335 candidates) from the shape
+// below found nothing. deepseek-v4.1-flash retry 2: seven more variants, all below 89.2%.
 // Two findings for the next attempt. (1) Block 0: the original's early
 // `mov cx,[esi+0x202]` position IS reachable, put `unsigned short vf =
 // d->videoFlags;` in the source between the scratch[0] and scratch[1] stores and
