@@ -1,4 +1,4 @@
-// Decompiled by deepseek-v4.1-flash, finished by GPT-6, finished by space-bunny-free, finished by deepseek-v4.1-flash, edited by deepseek-v4.1. Names are provisional.
+// Decompiled by deepseek-v4.1-flash, finished by GPT-6, finished by space-bunny-free, finished by deepseek-v4.1-flash, edited by deepseek-v4.1, edited by deepseek-v4.1-flash. Names are provisional.
 // #2371 retry by GPT-6.1-sol: no completed fresh check due to concurrent
 // compiler contention (two attempts stalled); preserve the recorded 78.3% best.
 // Still differs (78.3%, 1940 vs 1904 bytes). Remaining gaps, by first differing address:
@@ -18,6 +18,26 @@
 //              ternary folding is traded against the surrounding allocation.
 // Fixed this pass: signed `int id` plus the `if (id < 0x3ed) {...} else {BIG}` shape, which is what
 // the original's `jge 0x4df7c2` (jump to the big block, small block inline) does, 76.2 -> 78.1.
+// #3293 pass by deepseek-v4.1-flash (7 checks, best stays 78.3 / 1940 bytes, re-verified last):
+//   - HIWORD(wParam) != 1 at both high-word tests does reproduce the original shr/cmp pair and the
+//     `mov esi,edx` b-reuse (the `(wParam >> 16) != 1` spelling folds to and 0xffff0000 / cmp
+//     0x10000 here), but it re-allocates the [esp+0x10]/[esp+0x14] and [esp+0x20] homes and nets
+//     78.3 -> 77.8 at 1928 bytes, so the two shr/cmp wins do not pay for the slot churn.
+//   - saving `Node_004df590* head = set.head;` for the 0x3f4 walk (what keeps head in esi in the
+//     original at 0x4dfaa1) regresses to 74.2 / 1952 bytes; the load must stay `set.head->left`.
+//   - swapping the 0x113 `sel`/`n` declaration order is byte-neutral: 78.3 / 1940 both ways, so
+//     the [esp+0x10]-sel / [esp+0x14]-info swap is allocator order, not declaration order.
+// Remaining real (non-jump-target) diffs after the last check: mask/nmask homes 0x24/0x28 swapped
+// (original mask at 0x28, nmask at 0x24), koff=0 stored before the inner-loop guard instead of
+// after it, and the 0x110 case's GetWindowRect arg regs plus its strength-reduced DAT_00529e00[i].
+//   - rewriting the 0x110 walk to the original shape (`for (off = 0; n < count; n++, off += 0x10)`
+//     with `entries + off`) regresses to 73.5 / 1924: the j-counter / n-flagged-count split is what
+//     keeps the [esp+0x1c]/[esp+0x20] homes, even though the original asm really does use n as the
+//     counter (inc edi is n, [esp+0x44] is the counter) and recomputes `i<<4` per inner test.
+//   - declaring DAT_00529e00/00529e10 as char[] with explicit (Entry*)(base + i*0x10) casts is
+//     byte-neutral at 78.3 / 1940: the strength reduction survives the opaque form.
+//   - flipping the field_0 comparison to put the global first gives 78.2 / 1940, so keep
+//     `e->field_0 == DAT_00529e00[i].field_0`.
 #include <windows.h>
 #include <yvals.h>
 
@@ -311,8 +331,8 @@ BOOL Class_004df590::FUN_004df590(UINT msg, WPARAM wParam, LPARAM lParam)
         EnterCriticalSection(&cs->cs);
         Class_004e17c0* info = FUN_004e1a90();
         if (info->names.changed) {
-            int sel = -1;
             int n = 0;
+            int sel = -1;
             Node_004df590* node = info->names.head->left;
             SendDlgItemMessageA(hwnd, 0x3f4, 0x184, 0, 0);
             ((Class_004e18c0*)&set)->FUN_004e18c0();
