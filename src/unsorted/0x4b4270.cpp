@@ -1,4 +1,29 @@
-// Decompiled by space-bunny-free, finished by GPT-6.1-sol, edited by deepseek-v4.1, finished by deepseek-v4.1-flash, retried by Sonnet 5.5, finished by deepseek-v4.1-flash. Names are provisional.
+// Decompiled by space-bunny-free, finished by GPT-6.1-sol, edited by deepseek-v4.1, finished by deepseek-v4.1-flash, retried by Sonnet 5.5, finished by deepseek-v4.1-flash, finished by mimo-v2.6-pro. Names are provisional.
+// mimo-v2.6-pro pass: 79.2% -> 90.7% (737 bytes, exact size). Three levers:
+//  1. Include set: tools/headers.py showed <windows.h> <stdio.h> beats
+//     <stdio.h> <string.h> (79.2 -> 83.1). windows.h fixes the FUN_004b4560
+//     call register order and the whole ints and strings loops for free.
+//  2. Name test: dropped the `char* sect = *image;` cache and passed
+//     `*image + h.strOffset` inline (83.1 -> 85.4), which un-hoists the
+//     deref of [edi] into the branch like the original.
+//  3. `if (need > e->size)` instead of `if (e->size < need)` (85.4 -> 85.8),
+//     then tools/permute.py found `int need;` at function scope plus
+//     `int newLen = 0;` moved before the second entries lookup (85.8 -> 90.7).
+// Still differing (3 hunks, all allocator/scheduler): (a) the doubles loop
+// loads rec[2], rec[1], rec[0] with pushes interleaved (original: rec[0],
+// rec[1], rec[2] batched, then push hi, push lo), (b) the blob loop head
+// loads rec[3], rec[2], rec[0] with rec[1] inside the true branch (original:
+// rec[0] with an early test, rec[1], rec[2], rec[3] ascending), keeps c in
+// esi where the original keeps it in ebx and builds src in edi, (c) the
+// memcpy block loads buffer before e->len (original: e->len, reclen, buffer),
+// reloads h.reclen after rep movsb where the original keeps the count in eax,
+// and puts `xor edx,edx` before `and ecx,3` (original: after). Also tried and
+// rejected on this base: doubles `double d` local (82.1), `p[0]`/`p[1]`
+// without rec (80.6), blob rec struct views and a/b/c/d locals (89.9-90.3,
+// they get the ascending loads but shift the registers one slot: ecx, edx,
+// esi, eax instead of eax, ecx, ebx, edx, and drop the early test),
+// `int rl = h.reclen` cache (73-88), `int off = e->len` (84.4), newLen
+// before memcpy (88.8), scope_locals at function scope (79.8).
 // deepseek-v4.1-flash pass 2: 78.2% -> 79.2% (739 bytes, 2 over). The doubles
 // loop flipped to the `int* rec = p; p += 3;` form and now WINS (it measured
 // 73.9% on the older base, so re-measure loop shapes after a global change);
@@ -74,8 +99,8 @@
 // by 0x4b3770) and, when the caller's name matches the section name, unpacks the
 // section body and files its records away in the current section of the parsed
 // bank: integers, doubles, strings and raw blobs, in that order.
+#include <windows.h>
 #include <stdio.h>
-#include <string.h>
 
 extern int __cdecl _strcmpi(const char* s1, const char* s2);
 
@@ -180,6 +205,7 @@ public:
 // FUNCTION: 0x4b4270
 void Class_004b4270::FUN_004b4270(File_004b4270* fh, char** image, char* name)
 {
+    int need;
     int buf;
     int len;
     int base;
@@ -192,8 +218,7 @@ void Class_004b4270::FUN_004b4270(File_004b4270* fh, char** image, char* name)
     base = (int)FUN_004bb7a0(fh);
     FUN_004bb7c0(fh, &h, 0x20);
     end = base + h.size;
-    char* sect = *image;
-    if (name != 0 && _strcmpi(name, sect + h.strOffset) != 0) {
+    if (name != 0 && _strcmpi(name, *image + h.strOffset) != 0) {
         FUN_004bb710(fh, end);
         return;
     }
@@ -257,16 +282,16 @@ void Class_004b4270::FUN_004b4270(File_004b4270* fh, char** image, char* name)
                 src = (char*)(buf + (c - base) - 0x20);
                 e = &((Class_004b49d0*)this)->table->slots[((Class_004b49d0*)this)->table->index]
                         .entries[((Class_004b49d0*)this)->table->slots[((Class_004b49d0*)this)->table->index].current];
-                int need = h.reclen + e->len;
-                if (e->size < need) {
+                need = h.reclen + e->len;
+                if (need > e->size) {
                     e->buffer = (char*)FUN_004d8580(e->buffer, need);
                     e->size = need;
                 }
                 memcpy(e->buffer + e->len, src, h.reclen);
                 e->len += h.reclen;
+                int newLen = 0;
                 e = &((Class_004b49d0*)this)->table->slots[((Class_004b49d0*)this)->table->index]
                         .entries[((Class_004b49d0*)this)->table->slots[((Class_004b49d0*)this)->table->index].current];
-                int newLen = 0;
                 if (e->size < 0)
                     newLen = e->size;
                 e->len = newLen;
