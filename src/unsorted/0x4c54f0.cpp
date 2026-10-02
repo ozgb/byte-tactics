@@ -1,7 +1,104 @@
 // Decompiled by space-bunny-free, finished by deepseek-v4.1-flash; further tried by GPT-6.1-sol, edited by deepseek-v4.1, further tried by Space Bunny Free. Names are provisional.
+//
+// Space Bunny Free, issue 4579, LAST PASS: 70.2 -> 78.6 percent (558 of 583
+// bytes), no MATCH. Six workers had been stuck at 70.2 for six issues; this pass
+// broke it. Read this first, because every earlier note below says 70.2 and
+// several of them call a change a dead end that is now worth 5 points.
+//
+// The four changes, in the order they were found. None of the four is the
+// destructor's register rotation, which five workers chased:
+//
+// 1. THE INSERT CONDITION'S POLARITY WAS WRONG, and the way to get it right is to
+//    put the ASSIGN in the then-branch and the INSERT in the else. The exe tests
+//    `xor ecx,ecx; cmp eax,ebx; sete cl; neg cl; sbb ecx,ecx; inc ecx; test cl,cl;
+//    jne 0x4c56a2` and 0x4c56a2 is the insert, so it inserts when the found key
+//    EQUALS the key being added. Written as
+//    `if (!(atEnd || (strcmp(e->key.ptr, key.ptr) == 0))) { assign } else { insert }`
+//    that is what the file below says. Every earlier attempt kept the old
+//    `if (e == last || !(strcmp(...) == 0)) { insert } else { assign }`, which is
+//    the same bytes at the same score until the rest of this pass lands.
+// 2. DAT_005119b8 IS `char[]`, NOT `char*`, and that is worth 5.7 points (72.9 to
+//    78.6) once 1, 3 and 4 are in. Three earlier passes measured it in isolation
+//    and got 68.7, so they concluded it was a dead end: it is not, it is only a
+//    dead end while the insert branch is the wrong way round. The exe pushes
+//    `push 0x5119b8`, an immediate address, and data/globals.csv agrees (char[]
+//    in 74 of 80 files). THIS IS THE LESSON: a measured dead end is only a dead
+//    end for the spelling that was measured.
+// 3. The FUN_004c5c60 receiver must be read from the GLOBAL, not from a local:
+//    `e = ((Class_004c5c60*)DAT_0051fdb8)->FUN_004c5c60(key.ptr);` sitting next to
+//    an unrelated `s = DAT_0051fdb8;` (still needed for `last` and for the
+//    insert; dropping it is 59.0). That is what turns the exe's
+//    `mov ecx,[DAT] ... mov ebp,ecx` (load into the receiver, copy for later)
+//    into ours: 72.9. Reading `last` from the global as well is 71.8, and moving
+//    the `s = DAT_0051fdb8;` after the call is 71.4.
+// 4. The new + the old map are built by TWO STATIC INLINE HELPERS, `MapIsLoaded`
+//    and `LoadMap`, not by statements in the body. Writing them out in the body
+//    scores 69.2, and dropping MapIsLoaded for a plain `if (DAT_0051fdb8)` scores
+//    70.2, so both helpers are load-bearing: `MapIsLoaded` is what turns the
+//    null test into a materialised bool (`xor ecx,ecx; test edi,edi; setne cl;
+//    test cl,cl`), which is three instructions further from the original's plain
+//    `test eax,eax; je` but lands in the right register state everywhere else.
+// Plus one detail inside `Vec_004c54f0::Free2`: the zeroing order after the
+// `operator delete` is `last, first, end`, and the exe stores [edi+4], [edi+8],
+// [edi+0xc] in that order, so `last` first is right and the old spelling had it
+// the other way round.
+//
+// 1, 3 and 4 came out of `uv run tools/permute.py 0x4c54f0 --minutes 20 --seed 11
+// --jobs 4` (71.8 on its own); 2 fell out of re-checking a measured dead end once
+// the rest had landed. The file below is that result after every temporary,
+// self-assignment, goto, `do {} while (0)` and `while (1)` has been taken back
+// out, with the control flow, the loops and the local names restored by hand.
+// Each removal was checked on its own: self-assignment removal and the
+// goto/do-while removal are free, simplifying `(0 != X) != 0` to `X` is worth 0.4,
+// and the rest is neutral.
+//
+// The census below (143 of 188 instructions identical, 28 regions) is after all
+// of that. What is still open, in the order it is worth trying:
+//   * the destruction block, still the largest single difference, now bounded from
+//     both sides by sixteen measured variants (see below),
+//   * the insert test's missing `sete cl; neg cl; sbb ecx,ecx; inc ecx`: the source
+//     still has to compute the key comparison twice, once as a canonical byte bool
+//     and once as a 0/1 int (four attempts measured below),
+//   * `mov dl` against `mov cl` for the flag (not the constructor's store order)
+//     and `mov eax,ecx` against `mov edx,ecx` in the strcpy, both single registers.
+//
+// Re-measured on the corrected spelling, because point 2 is the lesson: the old
+// numbers below were taken against a broken insert branch and every one of these
+// is a fresh measurement (build/scratch/0x4c54f0/x*.cpp, y*.cpp, z*.cpp):
+//   * the insert condition's materialised forms are all slightly WORSE here, so
+//     leave it alone: a named `bool keysEqual` 77.9, `bool atEnd` instead of
+//     `int atEnd` 76.8, and `int keysDiffer` plus `bool keysEqual = !keysDiffer`
+//     (the shape the exe's `neg cl; sbb ecx,ecx; inc ecx` wants) 77.9 against
+//     78.6 for the plain inline `strcmp(...) == 0`,
+//   * the destructor's inline-free shapes are still dead ends on the new base,
+//     but one of them is now close: the free written out in the destructor is
+//     64.3, and a `~Vec_004c54f0` defined in the file and called explicitly is
+//     77.9 (it emits `push 0; mov ecx,reg; call ??_G`, see below),
+//   * MapIsLoaded must return `bool`: `int` is 70.9 and returning the pointer
+//     itself is 70.9, because either form loses the `setne cl`.
+//   * merging the FUN_004c93f0 call so both branches reach one call site (which is
+//     what the exe does: `mov esi,eax; add esi,4` after the insert, then `mov ecx,esi`
+//     into a shared call) is still worse: a `Class_004c93f0* slot` assigned in both
+//     branches is 77.4 and an `Elem_004c5bc0* slot` with `&slot->value` after the
+//     if is 76.5,
+//   * and two neutral spellings, so take either: writing the whole condition out
+//     with no `atEnd` local, and declaring `atEnd` inside the block instead of at
+//     function scope, both stay at 78.6 with 558 bytes.
+//   * the destruction block is the one thing that has NOT moved, and the helper
+//     idea that worked twice elsewhere does not reach it: the free as a
+//     `static inline void FreeVec(Vec_004c54f0*)` is 64.3, the whole destruction in
+//     a `static inline void DestroyMap(Class_004c5840*)` is 64.3, the loop bounds
+//     read through `w` instead of `v` is 64.3, and declaring `w` before `s` is
+//     neutral at 78.6. It still wants the object in ebx and the vector in edi with
+//     the free inlined, which no member-function or destructor spelling reaches,
+//     for the reason measured further down (a member function containing
+//     ::operator delete is never inlined, and one without it always folds).
+//
+//
 // Space Bunny Free retry (issue 4401, about 40 scratch scores, all in
 // build/scratch/0x4c54f0/): still 70.2 percent (553 bytes), no MATCH. The body
-// is unchanged from the version below; this pass only re-measured the
+// IS CHANGED NOW, by the pass above; everything below that is history and says
+// 70.2 because that is what was measured then. That pass only re-measured the
 // alternatives and re-confirmed which of them are dead ends. Do NOT trust a
 // score for `char[]` here: the first attempt at that patch replaced the word
 // inside this comment block instead of the declaration (the first literal
@@ -43,7 +140,9 @@
 //   ebx for the object and re-reads the global for the second delete.
 // - `char[]` for DAT_005119b8, patched properly: 68.7 (see above).
 //
-// THE INSERT CONDITION IS INVERTED IN THIS FILE. Read from the bytes at
+// THE INSERT CONDITION WAS INVERTED IN THIS FILE, AND IS NOW FIXED (see the
+// pass at the top: the assign goes in the then-branch, the insert in the else).
+// The rest of this note is why that reading was right. Read from the bytes at
 // 0x4c568d..0x4c569b: `cmp eax, ebx` (ebx is the zero register), `sete cl`
 // makes cl 1 when strcmp returned 0, `neg cl` makes it 0xff, and
 // `test cl, cl; jne 0x4c56a2` therefore JUMPS TO THE INSERT when the found
@@ -76,6 +175,94 @@
 //   `mov dl` versus `mov cl` for the constructor's char argument, and the
 //   prologue's `mov eax, [esp+8]` before `sub esp, 0x224`.
 
+// Space Bunny Free pass (issue 4579, 2026-10-02): still 70.2% (553 of 583), the
+// body below is unchanged, best kept. WHAT THE BYTE DIFF ACTUALLY SHOWS, from a
+// per-instruction aligner (build/scratch/0x4c54f0/insdiff.py, which prints the
+// difflib opcodes with addresses so "differs" can be split from "is merely
+// further down"): 127 of the original's 188 instructions are byte-identical,
+// 61 differ, in 35 separate regions, so the diffs SPREAD over the whole
+// function rather than sitting in one block. About half of the regions are pure
+// jump-target shifts (our function is 30 bytes shorter, so every branch past
+// the first difference moves); those cost nothing to fix. The real structural
+// differences are only five:
+//   1. the destruction block: the original loads the global into eax before the
+//      pushes and ends with object=ebx, vec=edi, Free2 inlined; ours loads it
+//      into edi after `push edi` and ends with object=edi, vec=ebx, Free2 called
+//      out of line (~20 instructions),
+//   2. `mov dl, [esp+0x17]` (flag) in the inlined constructor where ours has
+//      `mov cl`, one register,
+//   3. `mov eax, ecx` / `mov ecx, eax` in the strcpy expansion where ours keeps
+//      the length in edx, two registers,
+//   4. the 0x4c2f60 call site: `mov ecx,[esp+0x238]; push ecx; lea ecx,[esp+0x20]`
+//      against our `mov eax,[esp+0x238]; lea ecx,[esp+0x1c]; push eax`, and
+//      `lea edx,[esp+0x134]` against our `lea ecx,[esp+0x134]` for the 0x4c4420
+//      destination (same slot, different scratch register), plus `push 0x5119b8`
+//      against our load of DAT_005119b8's contents,
+//   5. the insert branch: the original has the int form of the key comparison
+//      beside the bool (`xor ecx,ecx; cmp; sete cl; neg cl; sbb ecx,ecx; inc ecx;
+//      test cl,cl`) and one shared FUN_004c93f0 call, ours has a bare
+//      `test eax,eax` and two call sites.
+// So 3, 4 and 5 are each one or two registers, and 2 is one register: they are
+// all scratch-register ties, not different algorithms. STACK LAYOFF IS ALREADY
+// RIGHT: key at frame+0, flag at +7, the index at +8, f at +0xc, value at +0x24,
+// name at +0x124, and every [esp+k] in both sides resolves to the same slot, so
+// no class member offset or local order is still wrong.
+//
+// Space Bunny Free, the same pass, sixteen more variants (build/scratch/0x4c54f0,
+// every one checked, best kept is the file below). The destruction block is now
+// bounded from both sides, which is why nobody has got past 70.2 in six tries:
+//   * MSVC 5 will NOT inline a member function whose body calls ::operator delete.
+//     Free2 stays out of line; an explicit `w->~Vec_004c54f0()` becomes
+//     `push 0; mov ecx,reg; call ??_G` whether ~Vec is defined in the class body
+//     (a1, d1, d4 = 69.6) or out of line (a2 = 56.8, d2 = 56.2, and d2 does
+//     materialise `lea esi,[edi+1]`, the one thing the original does), and the
+//     implicit member destruction of a non-trivial Vec calls ??_G as well (a2).
+//   * It DOES inline a member function with no call in it (e2: `w->Zero()`), and
+//     then it folds the vector onto the object: [edi+5], [edi+9], [edi+0xd],
+//     three callee-saved registers, frame 0x220. The free written out in the
+//     destructor folds the same way whatever the spelling: loop bounds through
+//     the object (b1 = 57.0), through the vector (b2 = 57.0), no local vector at
+//     all (b3 = 57.0), zeroing before the free (b4 = 55.2), and a call-free Vec
+//     destructor run implicitly with the buffer freed explicitly (e1 = 55.9).
+//   So the shapes that inline the free fold, and the shapes that keep four
+//   callee-saved registers leave a call behind. There is no shape in between, and
+//   the original has neither defect: it inlines the free AND keeps object=ebx
+//   and vec=edi. Whatever produced it is not a member function of the vector
+//   reachable from this file, which is worth knowing before another attempt.
+// The smaller ties are also pinned down:
+//   * The `mov dl` against `mov cl` for the flag is not the constructor's store
+//     order: `v.count` first (h2) and `v.count` last (h3) both stay at 70.2,
+//     `v.first = v.last = v.end = 0; v.count = count;` (h4) is 69.1.
+//   * `Class_004c4420* cur = f.current;` before the 0x4c4420 call (g1) is 70.2
+//     and byte-identical, so the receiver load cannot be scheduled first that way.
+//   * `char[]` measured a third time, with `cur` as well (g2 = 68.7). SUPERSEDED:
+//     on the corrected insert branch it is worth 5.7 points, see the top of this
+//     file. The 68.7 was real, it was just measured against a broken spelling.
+//     With it the
+//     `push 0x5119b8` DOES match; all that is left in that block is the
+//     destination pointer landing in ecx in ours and in edx then eax in the
+//     original, because the original loads the receiver into ecx first
+//     (`mov ecx,[esp+0x28]`) and we compute the destination into ecx first.
+//     Same three instructions, no algorithm difference.
+// The insert condition, four more attempts, and it is a genuine three-way bind:
+// the original needs a canonical 0/0xff byte bool (`sete`+`neg`), a 0/1 int of
+// the same comparison taken off the carry `neg` leaves (`sbb`+`inc`) that is
+// then DEAD, and the strcmp short-circuited behind `e == last`. Measured:
+//   i1 `e == last || (strcmp(...) == 0)`, the polarity the exe has (it jumps to
+//      the insert when the keys are EQUAL), 70.2 and 553 bytes, emitting
+//      `cmp eax,ebx; je insert` where the original emits `test cl,cl; jne insert`:
+//      same score, but strictly more faithful, so the next attempt should start here;
+//   j1 `bool same = ...; int differ = !same;` with differ unused, 69.6: it DOES
+//      give `xor ecx,ecx; cmp eax,ebx; ... sete cl; test cl,cl; jne insert`, the
+//      right polarity and a materialised bool, but MSVC hoists the whole strcmp
+//      above the `e == last` test, so the short circuit is gone;
+//   k1 `bool same = (e != last) && (strcmp(...) == 0)`, 64.0; k2 the same with
+//      `int same`, 67.2;
+//   j2/j3 a `static inline int Differ(a,b) { return strcmp(a,b) != 0; }` used as
+//      `!Differ(...)` or `Differ(...)`, both 70.2 and both emit exactly the
+//      current `cmp eax,ebx; je` with no bool and no int, so an inlined
+//      int-returning helper does not materialise anything either.
+// The permuter (seed 11, 20 minutes, --jobs 4) found nothing better.
 // Retry #3361 by mimo-v2.6-pro: still 70.2% (553 bytes). Kept variant A (below).
 //   * Read order: declaring `e = v.last;` before `p = v.first;` now emits
 //     `mov ebp,[edi+9]; mov esi,[edi+5]`, matching the original's last-then-first
@@ -125,7 +312,8 @@
 // this+1; the key the owner is born with is an uninitialised local byte
 // (the exe reads [esp+0x17], never written here), kept as `flag`.
 //
-// Best so far: 70.2 percent, up from 57. Two changes got it there, both about
+// Best so far as of the pass above: 71.8 percent (559 bytes), from 57. The two
+// changes that first got it to 70.2 were both about
 // forcing a value into the register or slot the original uses:
 //
 // 1. The destructor's vector free. The original materialises the vector's
@@ -197,9 +385,11 @@
 // a separate insertion path scored 57.2 percent and emitted a scalar deleting
 // destructor. Keep the original short-circuit condition.
 #include <string.h>
+#include <memory.h>
+#include <stdio.h>
 
 extern char DAT_0051fdc0[256];
-extern char* DAT_005119b8;
+extern char DAT_005119b8[];
 
 void __cdecl FUN_004d83a0(int);
 void __cdecl operator delete(void* p);
@@ -283,8 +473,8 @@ public:
     void Free2()
     {
         ::operator delete(this->first);
-        this->first = 0;
         this->last = 0;
+        this->first = 0;
         this->end = 0;
     }
 };
@@ -382,19 +572,34 @@ public:
     void FUN_004c3240();
 };
 
-// FUNCTION: 0x4c54f0
-void __stdcall FUN_004c54f0(char* filename, char* section)
+// Building the new map and remembering the section name. Written as its own
+// inline function because writing it out in the caller changes the register
+// allocation and costs 2.2 percent (71.4 -> 69.2).
+static inline void LoadMap(char flag, char* section)
 {
-    char flag;
-    int i;
-
-    if (_strcmpi(section, DAT_0051fdc0) == 0)
-        return;
-    if (DAT_0051fdb8)
-        DAT_0051fdb8->~Class_004c5840();
     DAT_0051fdb8 = new Class_004c5840(flag);
     FUN_004d83a0((int)DAT_0051fdb8);
     strcpy(DAT_0051fdc0, section);
+}
+
+// Also load-bearing as a separate function, for the same reason as LoadMap.
+static inline bool MapIsLoaded()
+{
+    return DAT_0051fdb8 != 0;
+}
+
+// FUNCTION: 0x4c54f0
+void __stdcall FUN_004c54f0(char* filename, char* section)
+{
+    int atEnd;
+    char flag;
+    Class_004c5840* s;
+
+    if (_strcmpi(section, DAT_0051fdc0) == 0)
+        return;
+    if (MapIsLoaded())
+        DAT_0051fdb8->~Class_004c5840();
+    LoadMap(flag, section);
     {
         Class_004c2ea0 f;
         char value[256];
@@ -407,14 +612,16 @@ void __stdcall FUN_004c54f0(char* filename, char* section)
                 ((Class_004c48c0*)f.current)->FUN_004c48c0(value, DAT_0051fdc0, 0xff, DAT_005119b8);
                 if (strlen(value) != 0) {
                     Class_004c91b0 key(name);
-                    Class_004c5840* s = DAT_0051fdb8;
-                    Elem_004c5bc0* e = ((Class_004c5c60*)s)->FUN_004c5c60(key.ptr);
-                    if (e == ((Class_004c5c60*)s)->last || !(strcmp(e->key.ptr, key.ptr) == 0)) {
+                    Elem_004c5bc0* e;
+                    s = DAT_0051fdb8;
+                    e = ((Class_004c5c60*)DAT_0051fdb8)->FUN_004c5c60(key.ptr);
+                    atEnd = (Elem_004c5bc0*)e == ((Class_004c5c60*)s)->last;
+                    if (!(atEnd || (strcmp(e->key.ptr, key.ptr) == 0))) {
+                        ((Class_004c93f0*)(&e->value))->FUN_004c93f0(value);
+                    } else {
                         Class_004c9180 empty;
                         Class_004c54d0 tmp((Class_004c91a0&)key, (Class_004c91a0&)empty);
-                        e = ((Vec_004c54f0*)((char*)s + 1))->FUN_004c59d0(e, (Elem_004c5bc0*)&tmp);
-                    } else {
-                        ((Class_004c93f0*)&e->value)->FUN_004c93f0(value);
+                        e = ((Vec_004c54f0*)(1 + (char*)s))->FUN_004c59d0((Elem_004c5bc0*)e, (Elem_004c5bc0*)&tmp);
                     }
                 }
                 ((Class_004c3e10*)&f)->FUN_004c3e10();
